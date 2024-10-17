@@ -1,22 +1,12 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import Login from './components/Login';
-import AdminDashboard from './components/AdminDashboard';
-import EmployeeDashboard from './components/EmployeeDashboard';
+// src/App.js
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import AdminHome from './components/AdminHome';
 
-const App = () => {
-  return (
-    <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/employee" element={<EmployeeDashboard />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
-    </Router>
-  );
-};
+function App() {
+  return(
+      <AdminHome/>
+    )
+}
 
 export default App;
