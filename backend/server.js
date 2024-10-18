@@ -34,20 +34,31 @@ const employeeSchema = new mongoose.Schema({
   experiencedRole: { type: String }
 });
 
-
 // Employee Model
 const Employee = mongoose.model('Employee', employeeSchema);
 
-//Leave schema
+// Leave Schema
 const leaveSchema = new mongoose.Schema({
   employeeId: { type: String, required: true },
+  employeeName: { type: String, required: true },
   date: { type: String, required: true },
   reason: { type: String, required: true },
   status: { type: String, default: 'Pending' } // Pending, Approved, Rejected
 });
 
-//Leave Model
+// Leave Model
 const Leave = mongoose.model('Leave', leaveSchema);
+
+// Accepted Leave Schema
+const acceptedLeaveSchema = new mongoose.Schema({
+  employeeId: { type: String, required: true },
+  employeeName: { type: String, required: true },
+  date: { type: String, required: true },
+  reason: { type: String, required: true }
+});
+
+// Accepted Leave Model
+const AcceptedLeave = mongoose.model('AcceptedLeave', acceptedLeaveSchema);
   
 
 // Helper function to generate unique ID
@@ -124,36 +135,87 @@ app.get('/employees/search/:employeeId', async (req, res) => {
 
 // Add Leave Request
 app.post('/leaves', async (req, res) => {
-    try {
-      const newLeave = new Leave(req.body);
-      await newLeave.save();
-      res.status(201).json(newLeave);
-    } catch (error) {
-      res.status(500).send(error);
+  try {
+    const employee = await Employee.findOne({ employeeId: req.body.employeeId });
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
     }
-  });
-  
+    const newLeave = new Leave({
+      ...req.body,
+      employeeName: employee.name
+    });
+    await newLeave.save();
+    res.status(201).json(newLeave);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
+// Get All Pending Leave Requests
+app.get('/leaves', async (req, res) => {
+  try {
+    const leaves = await Leave.find({ status: 'Pending' });
+    res.json(leaves);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
 // Get Leave Requests by Employee ID
-app.get('/leaverequests/employee/:employeeId', async (req, res) => {
-    try {
-      const leaveRequests = await LeaveRequest.find({ employeeId: req.params.employeeId });
-      res.json(leaveRequests);
-    } catch (error) {
-      res.status(500).send(error);
+app.get('/leaves/employee/:employeeId', async (req, res) => {
+  try {
+    const leaves = await Leave.find({ employeeId: req.params.employeeId });
+    const acceptedLeaves = await AcceptedLeave.find({ employeeId: req.params.employeeId });
+    res.json({ pending: leaves, accepted: acceptedLeaves });
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
+// Update Leave Status
+app.put('/leaves/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    if (status === 'Approved') {
+      const leave = await Leave.findById(id);
+      const acceptedLeave = new AcceptedLeave({
+        employeeId: leave.employeeId,
+        employeeName: leave.employeeName,
+        date: leave.date,
+        reason: leave.reason
+      });
+      await acceptedLeave.save();
+      await Leave.findByIdAndDelete(id);
+      res.json({ message: 'Leave approved and moved to accepted leaves' });
+    } else if (status === 'Rejected') {
+      await Leave.findByIdAndDelete(id);
+      res.json({ message: 'Leave rejected and removed' });
+    } else {
+      res.status(400).json({ message: 'Invalid status' });
     }
-  });
-  
-  
-  // Update Leave Status
-  app.put('/leaves/:id', async (req, res) => {
-    try {
-      const { id } = req.params;
-      const updatedLeave = await Leave.findByIdAndUpdate(id, req.body, { new: true });
-      res.json(updatedLeave);
-    } catch (error) {
-      res.status(500).send(error);
-    }
-  });
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
+app.get('/leaves/employee/:employeeId', async (req, res) => {
+  try {
+    const pendingLeaves = await Leave.find({ employeeId: req.params.employeeId });
+    const acceptedLeaves = await AcceptedLeave.find({ employeeId: req.params.employeeId });
+    
+    // Combine and format all leaves
+    const allLeaves = [
+      ...pendingLeaves.map(leave => ({...leave.toObject(), status: 'Pending'})),
+      ...acceptedLeaves.map(leave => ({...leave.toObject(), status: 'Approved'}))
+    ];
+
+    res.json(allLeaves);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
   
   app.post('/employees/message', (req, res) => {
     const { message } = req.body;

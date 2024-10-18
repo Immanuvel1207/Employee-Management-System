@@ -52,6 +52,16 @@ function AdminHome() {
     }
   };
 
+  const handleLeaveApproval = async (leaveId, newStatus) => {
+    try {
+      await axios.put(`http://localhost:5000/leaves/${leaveId}`, { status: newStatus });
+      setLeaves((prev) => prev.filter((leave) => leave._id !== leaveId));
+      toast.success(`Leave request ${newStatus}`);
+    } catch (error) {
+      toast.error('Failed to update leave request');
+    }
+  };
+
   const fetchAttendance = async () => {
     try {
       const response = await axios.get('http://localhost:5000/attendance');
@@ -151,19 +161,6 @@ function AdminHome() {
     }
   };
 
-  const handleLeaveApproval = async (leaveId, newStatus) => {
-    try {
-      await axios.put(`http://localhost:5000/leaves/${leaveId}`, { status: newStatus });
-      setLeaves((prev) =>
-        prev.map((leave) =>
-          leave._id === leaveId ? { ...leave, status: newStatus } : leave
-        )
-      );
-      toast.success(`Leave request ${newStatus}`);
-    } catch (error) {
-      toast.error('Failed to update leave request');
-    }
-  };
 
   const handleSendCommonMessage = async () => {
     try {
@@ -275,22 +272,21 @@ function AdminHome() {
         )}
       </div>
 
-      {/* Leave Requests */}
+      {/* Leave Requests Section */}
       <div className="leave-section">
-        <h3>Leave Management</h3>
+        <h3>Pending Leave Requests</h3>
         {leaves.length > 0 ? (
           leaves.map((leave) => (
             <div key={leave._id} className="leave-request">
-              <p><strong>Employee ID:</strong> {leave.employeeId}</p>
+              <p><strong>Employee:</strong> {leave.employeeName} ({leave.employeeId})</p>
               <p><strong>Date:</strong> {leave.date}</p>
               <p><strong>Reason:</strong> {leave.reason}</p>
-              <p><strong>Status:</strong> {leave.status}</p>
               <button onClick={() => handleLeaveApproval(leave._id, 'Approved')}>Approve</button>
               <button onClick={() => handleLeaveApproval(leave._id, 'Rejected')}>Reject</button>
             </div>
           ))
         ) : (
-          <p>No leave requests available</p>
+          <p>No pending leave requests</p>
         )}
       </div>
 
