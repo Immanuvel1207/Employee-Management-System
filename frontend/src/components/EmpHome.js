@@ -52,15 +52,17 @@ function EmpHome() {
   };
 
   return employee ? (
-    <div className="emp-home">
+    <div className="emp-home" style={{marginLeft:'800px',marginTop:'200px'}}>
       <h2>Welcome, {employee.name}</h2>
+      <br/> 
       <div className="employee-card">
         <p><strong>ID:</strong> {employee.employeeId}</p>
         <p><strong>Department:</strong> {employee.department}</p>
         <p><strong>Salary:</strong> ${employee.salary}</p>
-        <p><strong>Experience:</strong> {experience}</p>
+        <p><strong>Salary:</strong> ${employee.salary}</p>
+        <p><strong>phoneNumber:</strong> {employee.phoneNumber}</p>
       </div>
-
+    <br/>
       {!applied ? (
         <div className="leave-form">
           <h3>Apply for Leave</h3>
