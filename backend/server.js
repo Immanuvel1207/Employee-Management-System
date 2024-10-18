@@ -19,15 +19,36 @@ mongoose.connect('mongodb://localhost:27017/employees_db', {
 
 // Employee Schema
 const employeeSchema = new mongoose.Schema({
-  name: String,
-  email: { type: String, unique: true },  // Unique email
-  department: String,
-  salary: Number,
-  employeeId: String,  // Unique ID
+  employeeId: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  email: { type: String, required: true },
+  department: { type: String, required: true },
+  salary: { type: Number, required: true },
+  phoneNumber: { type: String, required: true },
+  sex: { type: String, required: true },
+  qualifications: { type: String, required: true },
+  role: { type: String, required: true },
+  dob: { type: String, required: true },
+  joiningDate: { type: String, required: true },
+  experience: { type: String, required: true },
+  experiencedRole: { type: String }
 });
+
 
 // Employee Model
 const Employee = mongoose.model('Employee', employeeSchema);
+
+//Leave schema
+const leaveSchema = new mongoose.Schema({
+  employeeId: { type: String, required: true },
+  date: { type: String, required: true },
+  reason: { type: String, required: true },
+  status: { type: String, default: 'Pending' } // Pending, Approved, Rejected
+});
+
+//Leave Model
+const Leave = mongoose.model('Leave', leaveSchema);
+  
 
 // Helper function to generate unique ID
 async function generateEmployeeId(department) {
@@ -41,20 +62,19 @@ async function generateEmployeeId(department) {
 // Add Employee
 app.post('/employees', async (req, res) => {
   try {
-    const { name, email, department, salary } = req.body;
-    
-    // Check if the email is already used
-    const existingEmployee = await Employee.findOne({ email });
-    if (existingEmployee) {
-      return res.status(400).json({ message: 'Email is already in use' });
-    }
+    // Automatically generate a unique employee ID based on a count or other logic
+    const employeeCount = await Employee.countDocuments();
+    const employeeId = `EMP${employeeCount + 1}`; // Generate employee ID (e.g., EMP1, EMP2, etc.)
 
-    const employeeId = await generateEmployeeId(department);
-    const newEmployee = new Employee({ name, email, department, salary, employeeId });
+    const newEmployee = new Employee({
+      employeeId: employeeId,
+      ...req.body,  // Spread the request body to capture other fields
+    });
+
     await newEmployee.save();
     res.status(201).json(newEmployee);
   } catch (error) {
-    res.status(500).send(error);
+    res.status(400).json({ error: error.message });
   }
 });
 
@@ -101,6 +121,45 @@ app.get('/employees/search/:employeeId', async (req, res) => {
     res.status(500).send(error);
   }
 });
+
+// Add Leave Request
+app.post('/leaves', async (req, res) => {
+    try {
+      const newLeave = new Leave(req.body);
+      await newLeave.save();
+      res.status(201).json(newLeave);
+    } catch (error) {
+      res.status(500).send(error);
+    }
+  });
+  
+// Get Leave Requests by Employee ID
+app.get('/leaverequests/employee/:employeeId', async (req, res) => {
+    try {
+      const leaveRequests = await LeaveRequest.find({ employeeId: req.params.employeeId });
+      res.json(leaveRequests);
+    } catch (error) {
+      res.status(500).send(error);
+    }
+  });
+  
+  
+  // Update Leave Status
+  app.put('/leaves/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updatedLeave = await Leave.findByIdAndUpdate(id, req.body, { new: true });
+      res.json(updatedLeave);
+    } catch (error) {
+      res.status(500).send(error);
+    }
+  });
+  
+  app.post('/employees/message', (req, res) => {
+    const { message } = req.body;
+    // Logic to send message to all employees
+    res.status(200).send({ success: true, message: 'Message sent to all employees' });
+  });
 
 // Start Server
 const PORT = 5000;
