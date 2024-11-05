@@ -18,7 +18,7 @@ const EmpHome = () => {
   });
   const [experience, setExperience] = useState('');
   const [error, setError] = useState('');
-  
+
   useEffect(() => {
     fetchEmployeeDetails();
     fetchLeaveRequests();

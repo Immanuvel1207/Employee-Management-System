@@ -2,9 +2,14 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+
+
 const multer = require('multer');
 const XLSX = require('xlsx');
 
+// Set up Multer storage configuration
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
 const app = express();
 
 // Middleware
@@ -33,8 +38,10 @@ const employeeSchema = new mongoose.Schema({
   dob: { type: String, required: true },
   joiningDate: { type: String, required: true },
   experience: { type: String, required: true },
-  experiencedRole: { type: String }
+  experiencedRole: { type: String },
+  attendance: [{ date: String, status: String }] // Add attendance as an array of objects
 });
+
 
 // Employee Model
 const Employee = mongoose.model('Employee', employeeSchema);
@@ -227,28 +234,39 @@ app.get('/leaves/employee/:employeeId', async (req, res) => {
 
 
 
-const upload = multer({ dest: 'uploads/' });
-
-app.post('/upload-attendance', upload.single('attendanceFile'), async (req, res) => {
-    const filePath = req.file.path;
-    const workbook = XLSX.readFile(filePath);
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    const presentIds = XLSX.utils.sheet_to_json(worksheet, { header: 1 }).flat();
-
-    // Retrieve all employees
-    const allEmployees = await Employee.find({});
-    const absentEmployees = allEmployees.filter(emp => !presentIds.includes(emp.id));
-
-    // Update attendance status in the database
-    for (const emp of allEmployees) {
-        const isAbsent = !presentIds.includes(emp.id);
-        await Employee.updateOne({ id: emp.id }, { $set: { isAbsentToday: isAbsent } });
+  // New route to handle attendance data upload
+  app.post('/attendance/upload', upload.single('file'), async (req, res) => {
+    try {
+      const workbook = XLSX.read(req.file.buffer);
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(sheet);
+  
+      // Extract employee IDs from the uploaded file
+      const presentEmployeeIds = data.map((row) => row.employeeId);
+  
+      // Find all employees and update their attendance
+      const employees = await Employee.find();
+  
+      for (const employee of employees) {
+        const isPresent = presentEmployeeIds.includes(employee.employeeId);
+        const attendanceRecord = { date: new Date().toISOString().slice(0, 10), status: isPresent ? 'Present' : 'Absent' };
+  
+        // Initialize attendance array if it doesn't exist
+        if (!employee.attendance) {
+          employee.attendance = [];
+        }
+  
+        employee.attendance.push(attendanceRecord);
+        await employee.save();
+      }
+  
+      res.status(200).json({ message: 'Attendance data uploaded successfully' });
+    } catch (error) {
+      console.error('Error uploading attendance data:', error);
+      res.status(500).json({ message: 'Error uploading attendance data' });
     }
-
-    res.json({ absentEmployees });
-});
-
+  });
+  
 // Start Server
 const PORT = 5000;
 app.listen(PORT, () => {

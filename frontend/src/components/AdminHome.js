@@ -24,13 +24,15 @@ function AdminHome() {
     experiencedRole: ''
   });
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [attendance, setAttendance] = useState([]);
   const [commonMessage, setCommonMessage] = useState('');
   const [leaves, setLeaves] = useState([]);
-
+  const [isUploading, setIsUploading] = useState(false);
+  const [absentEmployees, setAbsentEmployees] = useState([]);
   // Pagination state
+  const [attendance, setAttendance] = useState([]);
+
   const [currentPage, setCurrentPage] = useState(1);
-  const employeesPerPage = 5;
+  const employeesPerPage = 6;
 
   useEffect(() => {
     fetchEmployees();
@@ -190,6 +192,33 @@ function AdminHome() {
     currentPage * employeesPerPage
   );
 
+
+  const handleAttendanceUpload = async (e) => {
+    try {
+      setIsUploading(true);
+      const file = e.target.files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+
+      await axios.post('http://localhost:5000/attendance/upload', formData);
+      toast.success('Attendance data uploaded successfully');
+      await fetchAbsentEmployees();
+    } catch (error) {
+      toast.error('Error uploading attendance data');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const fetchAbsentEmployees = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/employees/absent');
+      setAbsentEmployees(response.data);
+    } catch (error) {
+      toast.error('Error fetching absent employees');
+    }
+  };
+
   return (
     <div className="admin-container">
       <h2>Employee Management System - Admin</h2>
@@ -271,16 +300,25 @@ function AdminHome() {
       {/* Attendance Section */}
       <div className="attendance-section">
         <h3>Track Attendance</h3>
-        {attendance.length > 0 ? (
-          attendance.map((record) => (
-            <div key={record._id} className="attendance-record">
-              <p><strong>Date:</strong> {record.date}</p>
-              <p><strong>Employee ID:</strong> {record.employeeId}</p>
-              <p><strong>Status:</strong> {record.status}</p>
-            </div>
-          ))
+        <input
+          type="file"
+          onChange={handleAttendanceUpload}
+          disabled={isUploading}
+        />
+        {isUploading && <p>Uploading attendance data...</p>}
+        {absentEmployees.length > 0 ? (
+          <div>
+            <h4>Absent Employees:</h4>
+            {absentEmployees.map((employee) => (
+              <div key={employee._id}>
+                <p>Employee ID: {employee.employeeId}</p>
+                <p>Name: {employee.name}</p>
+                <p>Phone: {employee.phoneNumber}</p>
+              </div>
+            ))}
+          </div>
         ) : (
-          <p>No attendance records available</p>
+          <p>No absent employees</p>
         )}
       </div>
 
