@@ -3,6 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import './AdminHome.css';
 import dayjs from 'dayjs';
+import EmployeeList from './EmployeeList';
 
 function AdminHome() {
   const [employees, setEmployees] = useState([]);
@@ -22,10 +23,14 @@ function AdminHome() {
     experience: 'No Experience',
     experiencedRole: ''
   });
-  const [selectedEmployee, setSelectedEmployee] = useState(null); // Track employee being updated
-  const [attendance, setAttendance] = useState([]); // Store attendance records
-  const [commonMessage, setCommonMessage] = useState(''); // Common message to all employees
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [attendance, setAttendance] = useState([]);
+  const [commonMessage, setCommonMessage] = useState('');
   const [leaves, setLeaves] = useState([]);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const employeesPerPage = 5;
 
   useEffect(() => {
     fetchEmployees();
@@ -133,7 +138,7 @@ function AdminHome() {
 
   const handleEditEmployee = (employee) => {
     setSelectedEmployee(employee);
-    setNewEmployee(employee); // Pre-fill the form with employee's current data
+    setNewEmployee(employee);
   };
 
   const handleDeleteEmployee = async (id) => {
@@ -159,18 +164,31 @@ function AdminHome() {
     } else {
       setFilteredEmployees(employees);
     }
+    setCurrentPage(1); // Reset to first page when searching
   };
-
 
   const handleSendCommonMessage = async () => {
     try {
       await axios.post('http://localhost:5000/employees/message', { message: commonMessage });
       toast.success('Message sent to all employees');
-      setCommonMessage(''); // Reset the message input
+      setCommonMessage('');
     } catch (error) {
       toast.error('Failed to send message');
     }
   };
+
+  // Pagination controls
+  const totalPages = Math.ceil(filteredEmployees.length / employeesPerPage);
+  const handlePreviousPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+  const handleNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+  const currentEmployees = filteredEmployees.slice(
+    (currentPage - 1) * employeesPerPage,
+    currentPage * employeesPerPage
+  );
 
   return (
     <div className="admin-container">
@@ -231,31 +249,25 @@ function AdminHome() {
       </div>
 
 
-        <h3 style={{marginLeft:'780px'}}>Employee List</h3>
-      {/* Employee List */}
-      <div className="employee-list" style={{display:'flex'}}>
-        
-        <br/>
-        {filteredEmployees.length > 0 ? (
-          filteredEmployees.map((employee) => (
-            <div className="employee-card" key={employee._id} style={{display:'flex'}}>
-              <h3>{employee.name}</h3>
-              <p><strong>ID:</strong> {employee.employeeId}</p>
-              <p><strong>Phone:</strong> {employee.phoneNumber}</p>
-              <p><strong>Sex:</strong> {employee.sex}</p>
-              <p><strong>Qualifications:</strong> {employee.qualifications}</p>
-              <p><strong>Role:</strong> {employee.role}</p>
-              <p><strong>Salary:</strong> {employee.salary}</p>
-              <p><strong>Joining Date:</strong> {employee.joiningDate}</p>
-              <button style={{padding:'8px',marginBottom:'5px', backgroundColor:'lightblue',borderRadius:'10px'}} onClick={() => handleEditEmployee(employee)}>Edit</button>
-              <button style={{padding:'8px',marginBottom:'5px', backgroundColor:'lightblue',borderRadius:'10px'}} onClick={() => handleDeleteEmployee(employee._id)}>Delete</button>
-            </div>
-          ))
-        ) : (
-          <p>No employees found</p>
-        )}
+      <h3 style={{ marginLeft: '780px' }}>Employee List</h3>
+      <EmployeeList
+        employees={currentEmployees}
+        onEdit={handleEditEmployee}
+        onDelete={handleDeleteEmployee}
+      />
+
+      {/* Pagination Controls */}
+      <div className="pagination">
+        <button onClick={handlePreviousPage} disabled={currentPage === 1}>
+          Previous
+        </button>
+        <span>Page {currentPage} of {totalPages}</span>
+        <button onClick={handleNextPage} disabled={currentPage === totalPages}>
+          Next
+        </button>
       </div>
 
+      
       {/* Attendance Section */}
       <div className="attendance-section">
         <h3>Track Attendance</h3>

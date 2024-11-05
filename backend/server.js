@@ -2,6 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const multer = require('multer');
+const XLSX = require('xlsx');
 
 const app = express();
 
@@ -222,6 +224,30 @@ app.get('/leaves/employee/:employeeId', async (req, res) => {
     // Logic to send message to all employees
     res.status(200).send({ success: true, message: 'Message sent to all employees' });
   });
+
+
+
+const upload = multer({ dest: 'uploads/' });
+
+app.post('/upload-attendance', upload.single('attendanceFile'), async (req, res) => {
+    const filePath = req.file.path;
+    const workbook = XLSX.readFile(filePath);
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const presentIds = XLSX.utils.sheet_to_json(worksheet, { header: 1 }).flat();
+
+    // Retrieve all employees
+    const allEmployees = await Employee.find({});
+    const absentEmployees = allEmployees.filter(emp => !presentIds.includes(emp.id));
+
+    // Update attendance status in the database
+    for (const emp of allEmployees) {
+        const isAbsent = !presentIds.includes(emp.id);
+        await Employee.updateOne({ id: emp.id }, { $set: { isAbsentToday: isAbsent } });
+    }
+
+    res.json({ absentEmployees });
+});
 
 // Start Server
 const PORT = 5000;
