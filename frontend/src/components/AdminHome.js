@@ -30,7 +30,6 @@ function AdminHome() {
   const [absentEmployees, setAbsentEmployees] = useState([]);
   // Pagination state
   const [attendance, setAttendance] = useState([]);
-
   const [currentPage, setCurrentPage] = useState(1);
   const employeesPerPage = 6;
 
@@ -198,11 +197,11 @@ function AdminHome() {
       setIsUploading(true);
       const file = e.target.files[0];
       const formData = new FormData();
-      formData.append('file', file);
-
-      await axios.post('http://localhost:5000/attendance/upload', formData);
+      formData.append('excel-file', file);
+  
+      const response = await axios.post('http://localhost:5000/attendance/upload', formData);
+      setAbsentEmployees(response.data.absentEmployees);
       toast.success('Attendance data uploaded successfully');
-      await fetchAbsentEmployees();
     } catch (error) {
       toast.error('Error uploading attendance data');
     } finally {
@@ -210,12 +209,20 @@ function AdminHome() {
     }
   };
 
-  const fetchAbsentEmployees = async () => {
-    try {
-      const response = await axios.get('http://localhost:5000/employees/absent');
-      setAbsentEmployees(response.data);
-    } catch (error) {
-      toast.error('Error fetching absent employees');
+  const handleShowAbsentEmployees = () => {
+    if (absentEmployees.length > 0) {
+      return (
+        <div>
+          <h4>Absent Employees:</h4>
+          {absentEmployees.map((employee) => (
+            <div key={employee.employeeId}>
+              <p>{employee.employeeId} - {employee.name} - {employee.phoneNumber}</p>
+            </div>
+          ))}
+        </div>
+      );
+    } else {
+      return <p>No absent employees</p>;
     }
   };
 
@@ -306,20 +313,8 @@ function AdminHome() {
           disabled={isUploading}
         />
         {isUploading && <p>Uploading attendance data...</p>}
-        {absentEmployees.length > 0 ? (
-          <div>
-            <h4>Absent Employees:</h4>
-            {absentEmployees.map((employee) => (
-              <div key={employee._id}>
-                <p>Employee ID: {employee.employeeId}</p>
-                <p>Name: {employee.name}</p>
-                <p>Phone: {employee.phoneNumber}</p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p>No absent employees</p>
-        )}
+        {handleShowAbsentEmployees()}
+        
       </div>
 
       {/* Leave Requests Section */}

@@ -2,7 +2,16 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const twilio = require('twilio');
 
+require('dotenv').config();
+
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+
+// Initialize the Twilio client
+const twilioClient = twilio(accountSid, authToken);
 
 const multer = require('multer');
 const XLSX = require('xlsx');
@@ -226,46 +235,72 @@ app.get('/leaves/employee/:employeeId', async (req, res) => {
   }
 });
   
-  app.post('/employees/message', (req, res) => {
+// Add the new route to send common message to all employees
+app.post('/employees/message', async (req, res) => {
+  try {
     const { message } = req.body;
-    // Logic to send message to all employees
-    res.status(200).send({ success: true, message: 'Message sent to all employees' });
-  });
 
+    // Fetch all employee phone numbers
+    const employees = await Employee.find({}, { phoneNumber: 1, _id: 0 });
+    const phoneNumbers = employees.map((emp) => emp.phoneNumber);
 
-
-  // New route to handle attendance data upload
-  app.post('/attendance/upload', upload.single('file'), async (req, res) => {
-    try {
-      const workbook = XLSX.read(req.file.buffer);
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(sheet);
-  
-      // Extract employee IDs from the uploaded file
-      const presentEmployeeIds = data.map((row) => row.employeeId);
-  
-      // Find all employees and update their attendance
-      const employees = await Employee.find();
-  
-      for (const employee of employees) {
-        const isPresent = presentEmployeeIds.includes(employee.employeeId);
-        const attendanceRecord = { date: new Date().toISOString().slice(0, 10), status: isPresent ? 'Present' : 'Absent' };
-  
-        // Initialize attendance array if it doesn't exist
-        if (!employee.attendance) {
-          employee.attendance = [];
-        }
-  
-        employee.attendance.push(attendanceRecord);
-        await employee.save();
-      }
-  
-      res.status(200).json({ message: 'Attendance data uploaded successfully' });
-    } catch (error) {
-      console.error('Error uploading attendance data:', error);
-      res.status(500).json({ message: 'Error uploading attendance data' });
+    // Send message to all phone numbers
+    for (const phoneNumber of phoneNumbers) {
+      await twilioClient.messages.create({
+        body: message,
+        from: twilioPhoneNumber,
+        to: phoneNumber
+      });
     }
-  });
+
+    res.status(200).json({ success: true, message: 'Message sent to all employees' });
+  } catch (error) {
+    console.error('Error sending common message:', error);
+    res.status(500).json({ success: false, message: 'Error sending common message' });
+  }
+});
+
+
+
+ // Route to handle attendance data upload
+ app.post('/attendance/upload', upload.single('excel-file'), async (req, res) => {
+  try {
+    const workbook = XLSX.read(req.file.buffer);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const data = XLSX.utils.sheet_to_json(sheet);
+    // Extract employee IDs from the uploaded file
+    const presentEmployeeIds = data.map((row) => row.employeeId.toString().toLowerCase());
+
+    // Find all employees and update their attendance
+    const employees = await Employee.find();
+    const absentEmployees = [];
+
+    for (const employee of employees) {
+      const employeeId = employee.employeeId.toString().toLowerCase();
+      if (!presentEmployeeIds.includes(employeeId)) {
+        absentEmployees.push({
+          employeeId: employee.employeeId,
+          name: employee.name,
+          phoneNumber: employee.phoneNumber
+        });
+      }
+      const isPresent = presentEmployeeIds.includes(employeeId);
+      const attendanceRecord = { date: new Date().toISOString().slice(0, 10), status: isPresent ? 'Present' : 'Absent' };
+      // Initialize attendance array if it doesn't exist
+      if (!employee.attendance) {
+        employee.attendance = [];
+      }
+      employee.attendance.push(attendanceRecord);
+      await employee.save();
+    }
+
+    res.status(200).json({ message: 'Attendance data uploaded successfully', absentEmployees });
+  } catch (error) {
+    console.error('Error uploading attendance data:', error);
+    res.status(500).json({ message: 'Error uploading attendance data' });
+  }
+});
+
   
 // Start Server
 const PORT = 5000;
