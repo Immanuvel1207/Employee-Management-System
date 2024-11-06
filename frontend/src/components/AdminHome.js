@@ -4,6 +4,9 @@ import { toast } from 'react-toastify';
 import './AdminHome.css';
 import dayjs from 'dayjs';
 import EmployeeList from './EmployeeList';
+import SendCommonMessage from './SendCommonMessage';
+import { useNavigate } from 'react-router-dom';
+
 
 function AdminHome() {
   const [employees, setEmployees] = useState([]);
@@ -32,6 +35,8 @@ function AdminHome() {
   const [attendance, setAttendance] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const employeesPerPage = 6;
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     fetchEmployees();
@@ -209,6 +214,13 @@ function AdminHome() {
     }
   };
 
+  const [showAddEmployeeForm, setShowAddEmployeeForm] = useState(false);
+
+// Toggle the visibility of the Add Employee form
+const toggleAddEmployeeForm = () => {
+  setShowAddEmployeeForm((prev) => !prev);
+};
+
   const handleShowAbsentEmployees = () => {
     if (absentEmployees.length > 0) {
       return (
@@ -230,7 +242,12 @@ function AdminHome() {
     <div className="admin-container">
       <h2>Employee Management System - Admin</h2>
 
-      {/* Add / Update Employee Form */}
+
+      <button onClick={toggleAddEmployeeForm}>
+      {showAddEmployeeForm ? 'Hide Add Employee Form' : 'Show Add Employee Form'}
+    </button>
+
+    {showAddEmployeeForm && (
       <div className="employee-form">
         <h2>{selectedEmployee ? 'Update Employee' : 'Add New Employee'}</h2>
         <input type="text" name="name" placeholder="Name" value={newEmployee.name} onChange={handleInputChange} />
@@ -272,6 +289,7 @@ function AdminHome() {
           <button onClick={handleAddEmployee}>Add Employee</button>
         )}
       </div>
+    )}
  
 <br/>
         {/* Search Functionality */}
@@ -285,7 +303,7 @@ function AdminHome() {
       </div>
 
 
-      <h3 style={{ marginLeft: '780px' }}>Employee List</h3>
+      <h3 style={{ marginLeft: '680px' }}>Employee List</h3>
       <EmployeeList
         employees={currentEmployees}
         onEdit={handleEditEmployee}
@@ -336,16 +354,8 @@ function AdminHome() {
       </div>
 
       {/* Send Common Message */}
-      <div className="common-message">
-        <h3>Send Common Message</h3>
-        <textarea cols={50} rows={5}
-          placeholder="Enter your message here"
-          value={commonMessage}
-          onChange={(e) => setCommonMessage(e.target.value)}
-        />
-        <br/>
-        <button onClick={handleSendCommonMessage} style={{backgroundColor:'orange',padding:'5px',borderRadius:'20px'}}>Send Message</button>
-      </div>
+      
+      <SendCommonMessage />
     </div>
   );
 }
