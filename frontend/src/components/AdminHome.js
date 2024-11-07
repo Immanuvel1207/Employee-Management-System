@@ -6,6 +6,9 @@ import dayjs from 'dayjs';
 import EmployeeList from './EmployeeList';
 import SendCommonMessage from './SendCommonMessage';
 import { useNavigate } from 'react-router-dom';
+import right from '../assets/image1.png';
+import left from '../assets/image.png';
+import { Flex } from 'antd';
 
 
 function AdminHome() {
@@ -34,7 +37,7 @@ function AdminHome() {
   // Pagination state
   const [attendance, setAttendance] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const employeesPerPage = 6;
+  const employeesPerPage = 4;
   const navigate = useNavigate();
 
 
@@ -225,12 +228,16 @@ const toggleAddEmployeeForm = () => {
     if (absentEmployees.length > 0) {
       return (
         <div>
-          <h4>Absent Employees:</h4>
+        <h4>Absent Employees:</h4>
+        <div>
+          
           {absentEmployees.map((employee) => (
-            <div key={employee.employeeId}>
-              <p>{employee.employeeId} - {employee.name} - {employee.phoneNumber}</p>
+            <div style={{width:'40%'}} key={employee.employeeId}>
+              <p><i class="fa fa-id-card"></i> {employee.employeeId} - {employee.name} <i class="fa fa-phone"></i> {employee.phoneNumber}</p>
             </div>
           ))}
+        </div>
+        <br/>
         </div>
       );
     } else {
@@ -292,6 +299,8 @@ const toggleAddEmployeeForm = () => {
     )}
  
 <br/>
+
+<div className="employee-section">
         {/* Search Functionality */}
       <div className="search-bar">
         <input
@@ -309,16 +318,18 @@ const toggleAddEmployeeForm = () => {
         onEdit={handleEditEmployee}
         onDelete={handleDeleteEmployee}
       />
-
+<br/>
       {/* Pagination Controls */}
       <div className="pagination">
-        <button onClick={handlePreviousPage} disabled={currentPage === 1}>
-          Previous
+        <button  onClick={handlePreviousPage} disabled={currentPage === 1}>
+        <img id='resize' src={left} />
         </button>
-        <span>Page {currentPage} of {totalPages}</span>
+        <span style={{margin:'10px'}}>Page {currentPage} of {totalPages}</span>
         <button onClick={handleNextPage} disabled={currentPage === totalPages}>
-          Next
+          <img  id='resize' src={right} />
         </button>
+      </div>
+
       </div>
 
       

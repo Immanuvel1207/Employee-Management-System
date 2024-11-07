@@ -3,13 +3,34 @@
   font-family: Arial, sans-serif;
 }
 
-.employee-form {
+button{
+  padding: 7px;
+  border-radius: 10px;
+}
+.admin-layout {
+  display: flex;
+  gap: 20px;
+}
+
+.leave-section {
+  flex: 1 1 30%;
   background-color: #f9f9f9;
   padding: 20px;
-  margin: 20px auto;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  max-width: 600px; /* This makes the form more compact */
+}
+
+.employee-section {
+  flex: 1 1 70%;
+}
+
+.employee-form {
+  background-color: #f9f9f9;
+  padding: 30px;
+  margin: 10px;
+
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .employee-form h2 {
@@ -40,26 +61,12 @@
   background-color: #0056b3;
 }
 
-.search-bar {
-  max-width: 600px;
-  margin: 0 auto;
-  margin-bottom: 20px;
-}
 
-.employee-list,
-.leave-section,
-.attendance-section,
-.common-message {
-  max-width: 800px;
-  margin: 20px auto;
-}
-
-input{
-  margin-right: 20px;
+#resize{
+  width: 20px;
 }
 
 .employee-card,
-.attendance-record,
 .leave-request {
   background-color: #fff;
   padding: 15px;
