@@ -317,7 +317,7 @@ app.post('/employees/message', async (req, res) => {
 });
 
 
-// Attendance upload route
+// Update attendance upload route
 app.post('/attendance/upload', upload.single('excel-file'), async (req, res) => {
   console.log('Attendance upload initiated');
 
@@ -362,10 +362,40 @@ app.post('/attendance/upload', upload.single('excel-file'), async (req, res) => 
     const employees = await Employee.find();
     console.log(`Total employees in database: ${employees.length}`);
 
+    // Check if the date is a holiday
+    const holiday = await Holiday.findOne({ date });
+
     // Update attendance for each employee
     for (const employee of employees) {
       const isPresent = presentEmployeeIds.includes(employee.employeeId);
-      const status = isPresent ? 'Present' : 'Absent';
+      let status = isPresent ? 'Present' : 'Absent';
+      
+      // Check for leave requests
+      const leaveRequest = await Leave.findOne({ employeeId: employee.employeeId, date });
+      
+      if (leaveRequest) {
+        if (leaveRequest.status === 'Approved') {
+          status = 'On Leave';
+        } else if (leaveRequest.status === 'Rejected' && !isPresent) {
+          status = 'Absent (Leave Rejected)';
+          await Leave.findByIdAndUpdate(leaveRequest._id, { isTakenAfterRejection: true });
+        }
+      } else if (!isPresent && !holiday) {
+        // If absent without an approved leave and it's not a holiday, mark as uninformed leave
+        const uninformedLeave = new Leave({
+          employeeId: employee.employeeId,
+          employeeName: employee.name,
+          date,
+          reason: 'Uninformed Leave',
+          status: 'Rejected',
+          isUninformed: true
+        });
+        await uninformedLeave.save();
+      }
+      
+      if (holiday) {
+        status = 'Holiday';
+      }
       
       console.log(`Marking ${employee.employeeId} as ${status}`);
       
@@ -397,7 +427,7 @@ app.post('/attendance/upload', upload.single('excel-file'), async (req, res) => 
 });
  
 
-// Calculate salary route
+// Update salary calculation route
 app.get('/salary/calculate', async (req, res) => {
   const currentMonth = dayjs().format('YYYY-MM');
   const daysInMonth = dayjs().daysInMonth();
@@ -411,17 +441,24 @@ app.get('/salary/calculate', async (req, res) => {
       const monthAttendance = employee.attendance.filter(a => a.date.startsWith(currentMonth));
       const presentDays = monthAttendance.filter(a => a.status === 'Present').length;
       const holidaysInAttendance = monthAttendance.filter(a => holidayDates.includes(a.date)).length;
+      const leaveDays = monthAttendance.filter(a => a.status === 'On Leave').length;
+      const uninformedLeaveDays = monthAttendance.filter(a => a.status === 'Absent').length;
+      const leavesTakenAfterRejection = monthAttendance.filter(a => a.status === 'Absent (Leave Rejected)').length;
       const totalWorkingDays = daysInMonth - holidayDates.length;
-      const effectivePresentDays = presentDays + holidaysInAttendance;
+      const effectivePresentDays = presentDays + holidaysInAttendance + leaveDays;
       
       const baseSalary = (employee.salary / daysInMonth) * effectivePresentDays;
-      const netSalary = baseSalary + employee.da - employee.pf;
+      const holidayPay = (employee.salary / daysInMonth) * holidaysInAttendance;
+      const deductions = (employee.salary / daysInMonth) * (uninformedLeaveDays + leavesTakenAfterRejection);
+      const netSalary = baseSalary + holidayPay + employee.da - employee.pf - deductions;
 
       const monthlySalary = {
         month: currentMonth,
         presentDays: effectivePresentDays,
         totalDays: daysInMonth,
         workingDays: totalWorkingDays,
+        holidayPay,
+        deductions,
         netSalary: Math.round(netSalary)
       };
 
@@ -434,9 +471,13 @@ app.get('/salary/calculate', async (req, res) => {
         totalDays: daysInMonth,
         workingDays: totalWorkingDays,
         baseSalary: Math.round(baseSalary),
+        holidayPay: Math.round(holidayPay),
         da: employee.da,
         pf: employee.pf,
-        netSalary: Math.round(netSalary)
+        deductions: Math.round(deductions),
+        netSalary: Math.round(netSalary),
+        uninformedLeaveDays,
+        leavesTakenAfterRejection
       };
     }));
 

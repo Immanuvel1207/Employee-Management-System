@@ -53,12 +53,13 @@ export default function Component() {
       if (!employee) {
         throw new Error('Employee data not available');
       }
-      const response = await axios.post('http://localhost:5000/leaves', {
+      await axios.post('http://localhost:5000/leaves', {
         employeeId: id,
         employeeName: employee.name,
         ...leaveForm
       });
-      setLeaves([...leaves, response.data]);
+      const response = await axios.get(`http://localhost:5000/leaves/employee/${id}`);
+      setLeaves(response.data);
       setLeaveForm({ reason: '', date: dayjs().format('YYYY-MM-DD') });
     } catch (error) {
       setError('Failed to submit leave request.');
@@ -87,7 +88,6 @@ export default function Component() {
     return <div className="not-found" role="alert">Employee not found.</div>;
   }
 
-
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
@@ -111,10 +111,10 @@ export default function Component() {
             <p><span className="font-semibold">Joining Date:</span> {employee.joiningDate}</p>
             <p><span className="font-semibold">Experience:</span> {experience}</p>
             <p><span className="font-semibold">Qualifications:</span> {employee.qualifications}</p>
-            <p><span className="font-semibold">Base Salary:</span> ₹{employee.salary}</p>
-            <p><span className="font-semibold">DA:</span> ₹{employee.da}</p>
-            <p><span className="font-semibold">PF:</span> ₹{employee.pf}</p>
-            <p><span className="font-semibold">Net Salary:</span> ₹{(employee.salary + employee.da - employee.pf).toFixed(2)}</p>
+            <p><span className="font-semibold">Base Salary:</span> ₹{employee.salary?.toLocaleString() ?? 'N/A'}</p>
+            <p><span className="font-semibold">DA:</span> ₹{employee.da?.toLocaleString() ?? 'N/A'}</p>
+            <p><span className="font-semibold">PF:</span> ₹{employee.pf?.toLocaleString() ?? 'N/A'}</p>
+            <p><span className="font-semibold">Net Salary:</span> ₹{((employee.salary || 0) + (employee.da || 0) - (employee.pf || 0)).toLocaleString()}</p>
           </div>
         </div>
 
@@ -147,32 +147,46 @@ export default function Component() {
         {/* Attendance Section */}
         <div className="attendance-section mb-8">
           <h3 className="text-xl font-semibold mb-4">Attendance</h3>
-          <table className="w-full">
-            <thead>
-              <tr>
-                <th className="border p-2">Date</th>
-                <th className="border p-2">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {employee.attendance && employee.attendance.map((record, index) => (
-                <tr key={index}>
-                  <td className="border p-2">{record.date}</td>
-                  <td className="border p-2">{record.status}</td>
+          {employee.attendance && employee.attendance.length > 0 ? (
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th className="border p-2">Date</th>
+                  <th className="border p-2">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {employee.attendance.map((record, index) => (
+                  <tr key={index}>
+                    <td className="border p-2">{record.date}</td>
+                    <td className="border p-2">{record.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p>No attendance records available.</p>
+          )}
         </div>
 
-        {/* Salary Section */}
-        {employee.monthlySalary && (
+        {/* Updated Salary Section */}
+        {employee.monthlySalary ? (
           <div className="salary-section mb-8">
             <h3 className="text-xl font-semibold mb-4">Current Month Salary Details</h3>
             <p><span className="font-semibold">Month:</span> {employee.monthlySalary.month}</p>
             <p><span className="font-semibold">Present Days:</span> {employee.monthlySalary.presentDays}</p>
-            <p><span className="font-semibold">Total Working Days:</span> {employee.monthlySalary.totalDays}</p>
-            <p><span className="font-semibold">Net Salary:</span> ₹{employee.monthlySalary.netSalary}</p>
+            <p><span className="font-semibold">Total Working Days:</span> {employee.monthlySalary.workingDays}</p>
+            <p><span className="font-semibold">Base Salary:</span> ₹{employee.salary?.toLocaleString() ?? 'N/A'}</p>
+            <p><span className="font-semibold">Holiday Pay:</span> ₹{employee.monthlySalary.holidayPay?.toLocaleString() ?? 'N/A'}</p>
+            <p><span className="font-semibold">DA:</span> ₹{employee.da?.toLocaleString() ?? 'N/A'}</p>
+            <p><span className="font-semibold">PF:</span> ₹{employee.pf?.toLocaleString() ?? 'N/A'}</p>
+            <p><span className="font-semibold">Deductions:</span> ₹{employee.monthlySalary.deductions?.toLocaleString() ?? 'N/A'}</p>
+            <p><span className="font-semibold">Net Salary:</span> ₹{employee.monthlySalary.netSalary?.toLocaleString() ?? 'N/A'}</p>
+          </div>
+        ) : (
+          <div className="salary-section mb-8">
+            <h3 className="text-xl font-semibold mb-4">Current Month Salary Details</h3>
+            <p>Salary details for the current month are not available yet.</p>
           </div>
         )}
 

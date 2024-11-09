@@ -5,7 +5,9 @@ const leaveSchema = new mongoose.Schema({
   employeeName: { type: String, required: true },
   date: { type: String, required: true },
   reason: { type: String, required: true },
-  status: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' }
+  status: { type: String, enum: ['Pending', 'Approved', 'Rejected'], default: 'Pending' },
+  isUninformed: { type: Boolean, default: false },
+  isTakenAfterRejection: { type: Boolean, default: false }
 });
 
 module.exports = mongoose.model('Leave', leaveSchema);

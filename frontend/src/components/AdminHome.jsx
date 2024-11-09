@@ -36,10 +36,12 @@ export default function Component() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddEmployeeForm, setShowAddEmployeeForm] = useState(false);
   const employeesPerPage = 10;
+  const [salaryRecords, setSalaryRecords] = useState([]);
 
   useEffect(() => {
     fetchEmployees();
     fetchLeaveRequests();
+    fetchSalaryRecords();
     fetchHolidays();
   }, []);
 
@@ -50,6 +52,15 @@ export default function Component() {
       setFilteredEmployees(response.data);
     } catch (error) {
       toast.error('Failed to fetch employees');
+    }
+  };
+
+  const fetchSalaryRecords = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/salary/calculate');
+      setSalaryRecords(response.data);
+    } catch (error) {
+      toast.error('Failed to fetch salary records');
     }
   };
 
@@ -324,7 +335,44 @@ export default function Component() {
       {activeTab === 'salary' && (
         <div className="tab-content">
           <h2>Salary Management</h2>
-          <SalaryCalculator />
+          <table className="salary-table">
+            <thead>
+              <tr>
+                <th>Employee ID</th>
+                <th>Name</th>
+                <th>Present Days</th>
+                <th>Total Days</th>
+                <th>Working Days</th>
+                <th>Base Salary (₹)</th>
+                <th>Holiday Pay (₹)</th>
+                <th>DA (₹)</th>
+                <th>PF (₹)</th>
+                <th>Deductions (₹)</th>
+                <th>Net Salary (₹)</th>
+                <th>Uninformed Leaves</th>
+                <th>Leaves Taken After Rejection</th>
+              </tr>
+            </thead>
+            <tbody>
+              {salaryRecords.map((record) => (
+                <tr key={record.employeeId}>
+                  <td>{record.employeeId}</td>
+                  <td>{record.name}</td>
+                  <td>{record.presentDays}</td>
+                  <td>{record.totalDays}</td>
+                  <td>{record.workingDays}</td>
+                  <td>₹{record.baseSalary.toLocaleString()}</td>
+                  <td>₹{record.holidayPay.toLocaleString()}</td>
+                  <td>₹{record.da.toLocaleString()}</td>
+                  <td>₹{record.pf.toLocaleString()}</td>
+                  <td>₹{record.deductions.toLocaleString()}</td>
+                  <td>₹{record.netSalary.toLocaleString()}</td>
+                  <td>{record.uninformedLeaveDays}</td>
+                  <td>{record.leavesTakenAfterRejection}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
