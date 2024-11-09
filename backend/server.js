@@ -160,11 +160,15 @@ app.post('/employees', async (req, res) => {
 // Get All Employees
 app.get('/employees', async (req, res) => {
   try {
-    const employees = await Employee.find();
-    console.log(`Fetched ${employees.length} employees`);
+    const { includeResigned } = req.query;
+    let query = {};
+    if (includeResigned !== 'true') {
+      query = { resignationDate: { $exists: false } };
+    }
+    const employees = await Employee.find(query);
     res.json(employees);
   } catch (error) {
-    handleError(res, error, 'Error fetching employees');
+    res.status(500).json({ message: 'Error fetching employees', error: error.message });
   }
 });
 // Update Employee
@@ -359,7 +363,7 @@ app.post('/attendance/upload', upload.single('excel-file'), async (req, res) => 
     console.log('Present Employee IDs:', presentEmployeeIds);
 
     // Get all employees
-    const employees = await Employee.find();
+    const employees = await Employee.find({ resignationDate: { $exists: false } });
     console.log(`Total employees in database: ${employees.length}`);
 
     // Check if the date is a holiday
@@ -487,6 +491,32 @@ app.get('/salary/calculate', async (req, res) => {
     res.status(500).json({ message: 'Error calculating salaries', error: error.message });
   }
 });
+
+// Resign Employee
+app.put('/employees/resign/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { resignationDate } = req.body;
+
+    const updatedEmployee = await Employee.findOneAndUpdate(
+      { employeeId: id },
+      { 
+        resignationDate,
+        isActive: false
+      },
+      { new: true }
+    );
+
+    if (!updatedEmployee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+
+    res.json({ message: 'Employee resigned successfully', employee: updatedEmployee });
+  } catch (error) {
+    res.status(500).json({ message: 'Error resigning employee', error: error.message });
+  }
+});
+
 
 // Resign employee
 app.post('/employees/:id/resign', async (req, res) => {

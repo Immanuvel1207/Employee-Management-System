@@ -36,6 +36,7 @@ export default function Component() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddEmployeeForm, setShowAddEmployeeForm] = useState(false);
   const employeesPerPage = 10;
+  const [resignForm, setResignForm] = useState({ employeeId: '', resignationDate: '' });
   const [salaryRecords, setSalaryRecords] = useState([]);
 
   useEffect(() => {
@@ -79,6 +80,20 @@ export default function Component() {
       setLeaves(response.data);
     } catch (error) {
       toast.error('Failed to fetch leave requests');
+    }
+  };
+
+  const handleResignEmployee = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(`http://localhost:5000/employees/resign/${resignForm.employeeId}`, {
+        resignationDate: resignForm.resignationDate
+      });
+      toast.success('Employee resigned successfully');
+      fetchEmployees();
+      setResignForm({ employeeId: '', resignationDate: '' });
+    } catch (error) {
+      toast.error('Failed to resign employee');
     }
   };
 
@@ -188,16 +203,6 @@ export default function Component() {
     }
   };
 
-  const handleResignEmployee = async (employeeId) => {
-    const resignationDate = dayjs().format('YYYY-MM-DD');
-    try {
-      await axios.post(`http://localhost:5000/employees/${employeeId}/resign`, { resignationDate });
-      toast.success('Employee resigned successfully');
-      fetchEmployees();
-    } catch (error) {
-      toast.error('Failed to resign employee');
-    }
-  };
 
   const totalPages = Math.ceil(filteredEmployees.length / employeesPerPage);
   const indexOfLastEmployee = currentPage * employeesPerPage;
@@ -214,6 +219,7 @@ export default function Component() {
         <button className={activeTab === 'leaves' ? 'active' : ''} onClick={() => setActiveTab('leaves')}>Leaves</button>
         <button className={activeTab === 'salary' ? 'active' : ''} onClick={() => setActiveTab('salary')}>Salary</button>
         <button className={activeTab === 'holidays' ? 'active' : ''} onClick={() => setActiveTab('holidays')}>Holidays</button>
+        <button className={activeTab === 'resign' ? 'active' : ''} onClick={() => setActiveTab('resign')}>Resign Employee</button>
         <button className={activeTab === 'message' ? 'active' : ''} onClick={() => setActiveTab('message')}>Send Message</button>
       </div>
 
@@ -412,6 +418,35 @@ export default function Component() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {activeTab === 'resign' && (
+        <div className="tab-content">
+          <h2>Resign Employee</h2>
+          <form onSubmit={handleResignEmployee} className="resign-form">
+            <div>
+              <label htmlFor="employeeId">Employee ID:</label>
+              <input
+                type="text"
+                id="employeeId"
+                value={resignForm.employeeId}
+                onChange={(e) => setResignForm({ ...resignForm, employeeId: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="resignationDate">Resignation Date:</label>
+              <input
+                type="date"
+                id="resignationDate"
+                value={resignForm.resignationDate}
+                onChange={(e) => setResignForm({ ...resignForm, resignationDate: e.target.value })}
+                required
+              />
+            </div>
+            <button type="submit">Submit Resignation</button>
+          </form>
         </div>
       )}
 
