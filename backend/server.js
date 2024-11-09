@@ -5,8 +5,9 @@ const bodyParser = require('body-parser');
 const twilio = require('twilio');
 const fs = require('fs');
 const path = require('path');
+const dayjs = require('dayjs');
 require('dotenv').config();
-
+const Leave = require('./models/Leave');
 
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -28,7 +29,7 @@ if (!fs.existsSync(uploadsDir)){
 // Multer storage configuration
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, uploadsDir)
+    cb(null, 'uploads/')
   },
   filename: function (req, file, cb) {
     cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
@@ -51,6 +52,16 @@ mongoose.connect('mongodb://localhost:27017/employees_db', {
 .then(() => console.log('MongoDB connected'))
 .catch(err => console.log(err));
 
+
+// Holiday Schema
+const holidaySchema = new mongoose.Schema({
+  date: String,
+  description: String
+});
+
+const Holiday = mongoose.model('Holiday', holidaySchema);
+
+
 // Employee Schema
 const employeeSchema = new mongoose.Schema({
   employeeId: { type: String, required: true, unique: true },
@@ -64,28 +75,23 @@ const employeeSchema = new mongoose.Schema({
   role: { type: String, required: true },
   dob: { type: String, required: true },
   joiningDate: { type: String, required: true },
+  resignationDate: { type: String },
   experience: { type: String, required: true },
   experiencedRole: { type: String },
   attendance: [{ date: String, status: String }],
   pf: { type: Number, required: true },
-  da: { type: Number, required: true }
+  da: { type: Number, required: true },
+  monthlySalary: {
+    month: String,
+    presentDays: Number,
+    totalDays: Number,
+    netSalary: Number
+  }
 });
-
 
 // Employee Model
 const Employee = mongoose.model('Employee', employeeSchema);
 
-// Leave Schema
-const leaveSchema = new mongoose.Schema({
-  employeeId: { type: String, required: true },
-  employeeName: { type: String, required: true },
-  date: { type: String, required: true },
-  reason: { type: String, required: true },
-  status: { type: String, default: 'Pending' } // Pending, Approved, Rejected
-});
-
-// Leave Model
-const Leave = mongoose.model('Leave', leaveSchema);
 
 // Accepted Leave Schema
 const acceptedLeaveSchema = new mongoose.Schema({
@@ -110,6 +116,27 @@ const handleError = (res, error, message) => {
   console.error(message, error);
   res.status(500).json({ message, error: error.message });
 };
+
+// Add holiday
+app.post('/holidays', async (req, res) => {
+  try {
+    const newHoliday = new Holiday(req.body);
+    await newHoliday.save();
+    res.status(201).json({ message: 'Holiday added successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error adding holiday', error: error.message });
+  }
+});
+
+// Get holidays
+app.get('/holidays', async (req, res) => {
+  try {
+    const holidays = await Holiday.find();
+    res.json(holidays);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching holidays', error: error.message });
+  }
+});
 
 // Add Employee
 app.post('/employees', async (req, res) => {
@@ -205,30 +232,24 @@ app.get('/employees/:id', async (req, res) => {
 });
 
 // Add Leave Request
+// Add Leave Request
 app.post('/leaves', async (req, res) => {
   try {
-    const employee = await Employee.findOne({ employeeId: req.body.employeeId });
-    if (!employee) {
-      return res.status(404).json({ message: 'Employee not found' });
-    }
-    const newLeave = new Leave({
-      ...req.body,
-      employeeName: employee.name
-    });
+    const newLeave = new Leave(req.body);
     await newLeave.save();
     res.status(201).json(newLeave);
   } catch (error) {
-    res.status(500).send(error);
+    res.status(500).json({ message: 'Error adding leave request', error: error.message });
   }
 });
 
-// Get All Pending Leave Requests
+// Get All Leave Requests (for Admin)
 app.get('/leaves', async (req, res) => {
   try {
-    const leaves = await Leave.find({ status: 'Pending' });
+    const leaves = await Leave.find();
     res.json(leaves);
   } catch (error) {
-    res.status(500).send(error);
+    res.status(500).json({ message: 'Error fetching leave requests', error: error.message });
   }
 });
 
@@ -236,10 +257,9 @@ app.get('/leaves', async (req, res) => {
 app.get('/leaves/employee/:employeeId', async (req, res) => {
   try {
     const leaves = await Leave.find({ employeeId: req.params.employeeId });
-    const acceptedLeaves = await AcceptedLeave.find({ employeeId: req.params.employeeId });
-    res.json({ pending: leaves, accepted: acceptedLeaves });
+    res.json(leaves);
   } catch (error) {
-    res.status(500).send(error);
+    res.status(500).json({ message: 'Error fetching leave requests', error: error.message });
   }
 });
 
@@ -249,42 +269,25 @@ app.put('/leaves/:id', async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
     
-    if (status === 'Approved') {
-      const leave = await Leave.findById(id);
-      const acceptedLeave = new AcceptedLeave({
-        employeeId: leave.employeeId,
-        employeeName: leave.employeeName,
-        date: leave.date,
-        reason: leave.reason
-      });
-      await acceptedLeave.save();
-      await Leave.findByIdAndDelete(id);
-      res.json({ message: 'Leave approved and moved to accepted leaves' });
-    } else if (status === 'Rejected') {
-      await Leave.findByIdAndDelete(id);
-      res.json({ message: 'Leave rejected and removed' });
-    } else {
-      res.status(400).json({ message: 'Invalid status' });
+    const updatedLeave = await Leave.findByIdAndUpdate(id, { status }, { new: true });
+    
+    if (!updatedLeave) {
+      return res.status(404).json({ message: 'Leave request not found' });
     }
+    
+    res.json({ message: `Leave ${status.toLowerCase()}`, leave: updatedLeave });
   } catch (error) {
-    res.status(500).send(error);
+    res.status(500).json({ message: 'Error updating leave status', error: error.message });
   }
 });
 
 app.get('/leaves/employee/:employeeId', async (req, res) => {
   try {
-    const pendingLeaves = await Leave.find({ employeeId: req.params.employeeId });
-    const acceptedLeaves = await AcceptedLeave.find({ employeeId: req.params.employeeId });
-    
-    // Combine and format all leaves
-    const allLeaves = [
-      ...pendingLeaves.map(leave => ({...leave.toObject(), status: 'Pending'})),
-      ...acceptedLeaves.map(leave => ({...leave.toObject(), status: 'Approved'}))
-    ];
-
-    res.json(allLeaves);
+    const leaves = await Leave.find({ employeeId: req.params.employeeId });
+    res.json(leaves);
   } catch (error) {
-    res.status(500).send(error);
+    console.error('Error fetching leaves:', error);
+    res.status(500).json({ message: 'Error fetching leaves', error: error.message });
   }
 });
   
@@ -314,8 +317,7 @@ app.post('/employees/message', async (req, res) => {
 });
 
 
-// Upload Attendance
-// Upload Attendance
+// Attendance upload route
 app.post('/attendance/upload', upload.single('excel-file'), async (req, res) => {
   console.log('Attendance upload initiated');
 
@@ -324,8 +326,20 @@ app.post('/attendance/upload', upload.single('excel-file'), async (req, res) => 
   }
 
   const { date } = req.body;
+  const today = dayjs();
+  const uploadDate = dayjs(date);
+
   if (!date) {
     return res.status(400).json({ message: 'Date is required' });
+  }
+
+  if (uploadDate.isBefore(today.subtract(2, 'day')) || uploadDate.isAfter(today.add(2, 'day'))) {
+    return res.status(400).json({ message: 'Attendance can only be uploaded for today, 2 days before, or 2 days after.' });
+  }
+
+  const existingAttendance = await Employee.findOne({ 'attendance.date': date });
+  if (existingAttendance) {
+    return res.status(400).json({ message: 'Attendance for this date has already been uploaded.' });
   }
 
   console.log(`Processing attendance for date: ${date}`);
@@ -377,42 +391,96 @@ app.post('/attendance/upload', upload.single('excel-file'), async (req, res) => 
       presentEmployees: presentEmployeeIds
     });
   } catch (error) {
-    handleError(res, error, 'Error processing attendance data');
+    console.error('Error processing attendance data:', error);
+    res.status(500).json({ message: 'Error processing attendance data', error: error.message });
   }
 });
-
  
 
-// Calculate Salary
-// Calculate Salary
+// Calculate salary route
 app.get('/salary/calculate', async (req, res) => {
+  const currentMonth = dayjs().format('YYYY-MM');
+  const daysInMonth = dayjs().daysInMonth();
+  
   try {
-    const employees = await Employee.find();
-    const salaryRecords = employees.map(employee => {
-      const presentDays = employee.attendance.filter(a => a.status === 'Present').length;
-      const totalDays = employee.attendance.length || 30; // Assuming 30 days if no attendance records
-      const baseSalary = (employee.salary / totalDays) * presentDays;
-      const da = employee.da || 0;
-      const pf = employee.pf || 0;
-      const netSalary = baseSalary + da - pf;
+    const employees = await Employee.find({ resignationDate: { $exists: false } });
+    const holidays = await Holiday.find({ date: { $regex: `^${currentMonth}` } });
+    const holidayDates = holidays.map(h => h.date);
+
+    const salaryRecords = await Promise.all(employees.map(async (employee) => {
+      const monthAttendance = employee.attendance.filter(a => a.date.startsWith(currentMonth));
+      const presentDays = monthAttendance.filter(a => a.status === 'Present').length;
+      const holidaysInAttendance = monthAttendance.filter(a => holidayDates.includes(a.date)).length;
+      const totalWorkingDays = daysInMonth - holidayDates.length;
+      const effectivePresentDays = presentDays + holidaysInAttendance;
+      
+      const baseSalary = (employee.salary / daysInMonth) * effectivePresentDays;
+      const netSalary = baseSalary + employee.da - employee.pf;
+
+      const monthlySalary = {
+        month: currentMonth,
+        presentDays: effectivePresentDays,
+        totalDays: daysInMonth,
+        workingDays: totalWorkingDays,
+        netSalary: Math.round(netSalary)
+      };
+
+      await Employee.findByIdAndUpdate(employee._id, { monthlySalary });
+
       return {
         employeeId: employee.employeeId,
         name: employee.name,
-        presentDays,
-        totalDays,
+        presentDays: effectivePresentDays,
+        totalDays: daysInMonth,
+        workingDays: totalWorkingDays,
         baseSalary: Math.round(baseSalary),
-        da,
-        pf,
+        da: employee.da,
+        pf: employee.pf,
         netSalary: Math.round(netSalary)
       };
-    });
-    console.log(`Calculated salaries for ${salaryRecords.length} employees`);
+    }));
+
     res.json(salaryRecords);
   } catch (error) {
-    handleError(res, error, 'Error calculating salaries');
+    console.error('Error calculating salaries:', error);
+    res.status(500).json({ message: 'Error calculating salaries', error: error.message });
   }
 });
 
+// Resign employee
+app.post('/employees/:id/resign', async (req, res) => {
+  const { id } = req.params;
+  const { resignationDate } = req.body;
+
+  try {
+    const employee = await Employee.findOneAndUpdate(
+      { employeeId: id },
+      { resignationDate },
+      { new: true }
+    );
+
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+
+    res.json({ message: 'Employee resigned successfully', employee });
+  } catch (error) {
+    res.status(500).json({ message: 'Error resigning employee', error: error.message });
+  }
+});
+
+// Get employee attendance
+app.get('/employees/:id/attendance', async (req, res) => {
+  try {
+    const employee = await Employee.findOne({ employeeId: req.params.id });
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
+    res.json(employee.attendance);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching attendance', error: error.message });
+  }
+});
 
   
 // Start Server

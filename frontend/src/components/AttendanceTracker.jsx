@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from 'react-toastify';
+import dayjs from 'dayjs';
+
+
 
 const AttendanceTracker = () => {
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [file, setFile] = useState(null);
-  const [uploadedFiles, setUploadedFiles] = useState([]);
   const [employees, setEmployees] = useState([]);
-  const [error, setError] = useState('');
-  const [uploadResponse, setUploadResponse] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     fetchEmployees();
@@ -18,8 +20,8 @@ const AttendanceTracker = () => {
       const response = await axios.get('http://localhost:5000/employees');
       setEmployees(response.data);
     } catch (error) {
-      console.error('Error fetching employees:', error);
-      setError('Failed to fetch employees. Please try again.');
+      console.error('Failed to fetch employees:', error);
+      toast.error('Failed to fetch employees');
     }
   };
 
@@ -28,12 +30,14 @@ const AttendanceTracker = () => {
   };
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    if (e.target.files && e.target.files.length > 0) {
+      setFile(e.target.files[0]);
+    }
   };
 
   const handleUpload = async () => {
     if (!selectedDate || !file) {
-      setError('Please select a date and file');
+      toast.error('Please select a date and file');
       return;
     }
 
@@ -41,28 +45,31 @@ const AttendanceTracker = () => {
     formData.append('date', selectedDate);
     formData.append('excel-file', file);
 
+    setIsUploading(true);
+
     try {
       const response = await axios.post('http://localhost:5000/attendance/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
-      setUploadedFiles([...uploadedFiles, selectedDate]);
-      setError('');
-      setUploadResponse(response.data);
-      alert('Attendance uploaded successfully');
+      toast.success(response.data.message);
       fetchEmployees(); // Refresh employee data after upload
     } catch (error) {
-      console.error('Error uploading attendance:', error);
-      setError('Failed to upload attendance. Please try again.');
-      setUploadResponse(error.response?.data);
+      console.error('Failed to upload attendance:', error);
+      if (axios.isAxiosError(error) && error.response) {
+        toast.error(error.response.data.message || 'Failed to upload attendance');
+      } else {
+        toast.error('An unexpected error occurred');
+      }
+    } finally {
+      setIsUploading(false);
     }
   };
 
   return (
     <div className="attendance-tracker">
       <h2>Attendance Tracker</h2>
-      {error && <div className="error">{error}</div>}
       <div className="upload-section">
         <input
           type="date"
@@ -74,21 +81,9 @@ const AttendanceTracker = () => {
           onChange={handleFileChange}
           accept=".xlsx, .xls"
         />
-        <button onClick={handleUpload}>Upload Attendance</button>
-      </div>
-      {uploadResponse && (
-        <div className="upload-response">
-          <h3>Upload Response</h3>
-          <pre>{JSON.stringify(uploadResponse, null, 2)}</pre>
-        </div>
-      )}
-      <div className="uploaded-files">
-        <h3>Uploaded Attendance Records</h3>
-        <ul>
-          {uploadedFiles.map((date, index) => (
-            <li key={index}>{date}</li>
-          ))}
-        </ul>
+        <button onClick={handleUpload} disabled={isUploading}>
+          {isUploading ? 'Uploading...' : 'Upload Attendance'}
+        </button>
       </div>
       <div className="employee-attendance">
         <h3>Employee Attendance</h3>
@@ -104,11 +99,11 @@ const AttendanceTracker = () => {
           </thead>
           <tbody>
             {employees.map((employee) => (
-              <tr key={employee.employeeId}>
+              <tr key={employee._id}>
                 <td>{employee.employeeId}</td>
                 <td>{employee.name}</td>
-                <td>{employee.attendance?.filter(a => a.status === 'Present').length || 0}</td>
-                <td>{employee.attendance?.length || 0}</td>
+                <td>{employee.attendance ? employee.attendance.filter(a => a.status === 'Present').length : 0}</td>
+                <td>{employee.attendance ? employee.attendance.length : 0}</td>
                 <td>
                   {employee.attendance && employee.attendance.length > 0
                     ? `${employee.attendance[employee.attendance.length - 1].date}: ${employee.attendance[employee.attendance.length - 1].status}`
