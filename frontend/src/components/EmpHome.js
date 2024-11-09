@@ -88,12 +88,23 @@ const EmpHome = () => {
         
         {/* Employee Details Card */}
         <div className="bg-gray-50 p-4 rounded-lg mb-6">
+          <h3 className="text-xl font-semibold mb-4">Employee Details</h3>
           <div className="grid grid-cols-2 gap-4">
             <p><span className="font-semibold">ID:</span> {employee?.employeeId}</p>
+            <p><span className="font-semibold">Name:</span> {employee?.name}</p>
+            <p><span className="font-semibold">Email:</span> {employee?.email}</p>
             <p><span className="font-semibold">Department:</span> {employee?.department}</p>
-            <p><span className="font-semibold">Salary:</span> ${employee?.salary}</p>
+            <p><span className="font-semibold">Role:</span> {employee?.role}</p>
             <p><span className="font-semibold">Phone:</span> {employee?.phoneNumber}</p>
+            <p><span className="font-semibold">Sex:</span> {employee?.sex}</p>
+            <p><span className="font-semibold">Date of Birth:</span> {employee?.dob}</p>
+            <p><span className="font-semibold">Joining Date:</span> {employee?.joiningDate}</p>
             <p><span className="font-semibold">Experience:</span> {experience}</p>
+            <p><span className="font-semibold">Qualifications:</span> {employee?.qualifications}</p>
+            <p><span className="font-semibold">Base Salary:</span> ${employee?.salary}</p>
+            <p><span className="font-semibold">DA:</span> ${employee?.da}</p>
+            <p><span className="font-semibold">PF:</span> ${employee?.pf}</p>
+            <p><span className="font-semibold">Net Salary:</span> ${(employee?.salary + employee?.da - employee?.pf).toFixed(2)}</p>
           </div>
         </div>
 
@@ -133,7 +144,7 @@ const EmpHome = () => {
             {leaves.pending?.length > 0 ? (
               <div className="space-y-3">
                 {leaves.pending.map((leave, index) => (
-                  <div style={{padding:'10px'}} key={leave._id || index} className="bg-gray-50 p-3 rounded">
+                  <div key={leave._id || index} className="bg-gray-50 p-3 rounded">
                     <p><span className="font-medium">Date:</span> {leave.date}</p>
                     <p><span className="font-medium">Reason:</span> {leave.reason}</p>
                     <p className={getStatusColor('Pending')}>Status: Pending</p>
@@ -151,7 +162,7 @@ const EmpHome = () => {
             {leaves.accepted?.length > 0 ? (
               <div className="space-y-3">
                 {leaves.accepted.map((leave, index) => (
-                  <div style={{padding:'10px'}} key={leave._id || index} className="bg-gray-50 p-3 rounded">
+                  <div key={leave._id || index} className="bg-gray-50 p-3 rounded">
                     <p><span className="font-medium">Date:</span> {leave.date}</p>
                     <p><span className="font-medium">Reason:</span> {leave.reason}</p>
                     <p className={getStatusColor('Approved')}>Status: Approved</p>

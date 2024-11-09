@@ -9,8 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import right from '../assets/image1.png';
 import left from '../assets/image.png';
 import { Flex } from 'antd';
-
-
+import AttendanceTracker from './AttendanceTracker';
+import SalaryCalculator from './SalaryCalculator';
 function AdminHome() {
   const [employees, setEmployees] = useState([]);
   const [filteredEmployees, setFilteredEmployees] = useState([]);
@@ -27,8 +27,11 @@ function AdminHome() {
     dob: '',
     joiningDate: dayjs().format('YYYY-MM-DD'),
     experience: 'No Experience',
-    experiencedRole: ''
+    experiencedRole: '',
+    pf: '',
+    da: ''
   });
+  const [activeTab, setActiveTab] = useState('employees');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [commonMessage, setCommonMessage] = useState('');
   const [leaves, setLeaves] = useState([]);
@@ -89,6 +92,8 @@ function AdminHome() {
     const { name, value } = e.target;
     setNewEmployee((prev) => ({ ...prev, [name]: value }));
   };
+
+  
 
   const handleAddEmployee = async () => {
     try {
@@ -161,19 +166,20 @@ function AdminHome() {
     }
   };
 
-  const handleSearch = (e) => {
+  const handleSearch = async (e) => {
     const search = e.target.value;
     setSearchTerm(search);
     if (search) {
-      setFilteredEmployees(
-        employees.filter((employee) =>
-          employee.name.toLowerCase().includes(search.toLowerCase())
-        )
-      );
+      try {
+        const response = await axios.get(`http://localhost:5000/employees/search?query=${search}`);
+        setFilteredEmployees(response.data);
+      } catch (error) {
+        toast.error('Failed to search employees');
+      }
     } else {
       setFilteredEmployees(employees);
     }
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   };
 
   const handleSendCommonMessage = async () => {
@@ -245,10 +251,18 @@ const toggleAddEmployeeForm = () => {
     }
   };
 
+  
+
   return (
     <div className="admin-container">
       <h2>Employee Management System - Admin</h2>
 
+      <div className="tabs">
+        <button onClick={() => setActiveTab('employees')} className={activeTab === 'employees' ? 'active' : ''}>Employees</button>
+        <button onClick={() => setActiveTab('attendance')} className={activeTab === 'attendance' ? 'active' : ''}>Attendance</button>
+        <button onClick={() => setActiveTab('salary')} className={activeTab === 'salary' ? 'active' : ''}>Salary</button>
+        <button onClick={() => setActiveTab('message')} className={activeTab === 'message' ? 'active' : ''}>Send Message</button>
+      </div>
 
       <button onClick={toggleAddEmployeeForm}>
       {showAddEmployeeForm ? 'Hide Add Employee Form' : 'Show Add Employee Form'}
@@ -261,6 +275,8 @@ const toggleAddEmployeeForm = () => {
         <input type="email" name="email" placeholder="Email" value={newEmployee.email} onChange={handleInputChange} />
         <input type="text" name="department" placeholder="Department" value={newEmployee.department} onChange={handleInputChange} />
         <input type="number" name="salary" placeholder="Salary" value={newEmployee.salary} onChange={handleInputChange} />
+        <input type="number" name="pf" placeholder="PF" value={newEmployee.pf} onChange={handleInputChange} />
+        <input type="number" name="da" placeholder="DA" value={newEmployee.da} onChange={handleInputChange} />
         <input type="text" name="phoneNumber" placeholder="Phone Number" value={newEmployee.phoneNumber} onChange={handleInputChange} />
         <input type="text" name="sex" placeholder="Sex" value={newEmployee.sex} onChange={handleInputChange} />
         <input type="text" name="qualifications" placeholder="Qualifications" value={newEmployee.qualifications} onChange={handleInputChange} />
@@ -299,7 +315,7 @@ const toggleAddEmployeeForm = () => {
     )}
  
 <br/>
-
+{activeTab === 'employees' && (
 <div className="employee-section">
         {/* Search Functionality */}
       <div className="search-bar">
@@ -331,20 +347,10 @@ const toggleAddEmployeeForm = () => {
       </div>
 
       </div>
-
+    )}
+     {activeTab === 'attendance' &&  <AttendanceTracker/>}
       
-      {/* Attendance Section */}
-      <div className="attendance-section">
-        <h3>Track Attendance</h3>
-        <input
-          type="file"
-          onChange={handleAttendanceUpload}
-          disabled={isUploading}
-        />
-        {isUploading && <p>Uploading attendance data...</p>}
-        {handleShowAbsentEmployees()}
-        
-      </div>
+      
 
       {/* Leave Requests Section */}
       <div className="leave-section">
@@ -365,8 +371,8 @@ const toggleAddEmployeeForm = () => {
       </div>
 
       {/* Send Common Message */}
-      
-      <SendCommonMessage />
+      <SalaryCalculator />
+      {activeTab === 'message' && <SendCommonMessage />}
     </div>
   );
 }

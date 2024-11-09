@@ -3,8 +3,11 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const twilio = require('twilio');
-
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
+
+
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -16,9 +19,24 @@ const twilioClient = twilio(accountSid, authToken);
 const multer = require('multer');
 const XLSX = require('xlsx');
 
-// Set up Multer storage configuration
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)){
+    fs.mkdirSync(uploadsDir);
+}
+// Multer storage configuration
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadsDir)
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname))
+  }
+});
+
+const upload = multer({ storage: storage });
+
 const app = express();
 
 // Middleware
@@ -48,7 +66,9 @@ const employeeSchema = new mongoose.Schema({
   joiningDate: { type: String, required: true },
   experience: { type: String, required: true },
   experiencedRole: { type: String },
-  attendance: [{ date: String, status: String }] // Add attendance as an array of objects
+  attendance: [{ date: String, status: String }],
+  pf: { type: Number, required: true },
+  da: { type: Number, required: true }
 });
 
 
@@ -86,7 +106,10 @@ async function generateEmployeeId(department) {
   return `${department.substring(0, 3).toUpperCase()}_${serial}`;
 }
 
-// Routes
+const handleError = (res, error, message) => {
+  console.error(message, error);
+  res.status(500).json({ message, error: error.message });
+};
 
 // Add Employee
 app.post('/employees', async (req, res) => {
@@ -111,12 +134,12 @@ app.post('/employees', async (req, res) => {
 app.get('/employees', async (req, res) => {
   try {
     const employees = await Employee.find();
+    console.log(`Fetched ${employees.length} employees`);
     res.json(employees);
   } catch (error) {
-    res.status(500).send(error);
+    handleError(res, error, 'Error fetching employees');
   }
 });
-
 // Update Employee
 app.put('/employees/:id', async (req, res) => {
   try {
@@ -145,6 +168,36 @@ app.get('/employees/search/:employeeId', async (req, res) => {
     const { employeeId } = req.params;
     const employee = await Employee.findOne({ employeeId });
     if (!employee) return res.status(404).json({ message: 'Employee not found' });
+    res.json(employee);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
+app.get('/employees/search', async (req, res) => {
+  try {
+    const { query } = req.query;
+    const employees = await Employee.find({
+      $or: [
+        { name: { $regex: query, $options: 'i' } },
+        { employeeId: { $regex: query, $options: 'i' } },
+        { department: { $regex: query, $options: 'i' } },
+        { role: { $regex: query, $options: 'i' } }
+      ]
+    });
+    res.json(employees);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
+// Update the route to get a single employee
+app.get('/employees/:id', async (req, res) => {
+  try {
+    const employee = await Employee.findById(req.params.id);
+    if (!employee) {
+      return res.status(404).json({ message: 'Employee not found' });
+    }
     res.json(employee);
   } catch (error) {
     res.status(500).send(error);
@@ -261,45 +314,105 @@ app.post('/employees/message', async (req, res) => {
 });
 
 
+// Upload Attendance
+// Upload Attendance
+app.post('/attendance/upload', upload.single('excel-file'), async (req, res) => {
+  console.log('Attendance upload initiated');
 
- // Route to handle attendance data upload
- app.post('/attendance/upload', upload.single('excel-file'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'No file uploaded' });
+  }
+
+  const { date } = req.body;
+  if (!date) {
+    return res.status(400).json({ message: 'Date is required' });
+  }
+
+  console.log(`Processing attendance for date: ${date}`);
+  console.log(`File saved at: ${req.file.path}`);
+
   try {
-    const workbook = XLSX.read(req.file.buffer);
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(sheet);
-    // Extract employee IDs from the uploaded file
-    const presentEmployeeIds = data.map((row) => row.employeeId.toString().toLowerCase());
+    // Read the Excel file
+    const workbook = XLSX.readFile(req.file.path);
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const data = XLSX.utils.sheet_to_json(worksheet);
 
-    // Find all employees and update their attendance
+    console.log('Parsed Excel data:', data);
+
+    // Extract employee IDs from the Excel data
+    const presentEmployeeIds = data.map(row => row.employeeId.toString().trim());
+    console.log('Present Employee IDs:', presentEmployeeIds);
+
+    // Get all employees
     const employees = await Employee.find();
-    const absentEmployees = [];
+    console.log(`Total employees in database: ${employees.length}`);
 
+    // Update attendance for each employee
     for (const employee of employees) {
-      const employeeId = employee.employeeId.toString().toLowerCase();
-      if (!presentEmployeeIds.includes(employeeId)) {
-        absentEmployees.push({
-          employeeId: employee.employeeId,
-          name: employee.name,
-          phoneNumber: employee.phoneNumber
-        });
+      const isPresent = presentEmployeeIds.includes(employee.employeeId);
+      const status = isPresent ? 'Present' : 'Absent';
+      
+      console.log(`Marking ${employee.employeeId} as ${status}`);
+      
+      // Find if attendance record for this date already exists
+      const existingIndex = employee.attendance.findIndex(record => record.date === date);
+      
+      if (existingIndex !== -1) {
+        employee.attendance[existingIndex] = { date, status };
+      } else {
+        employee.attendance.push({ date, status });
       }
-      const isPresent = presentEmployeeIds.includes(employeeId);
-      const attendanceRecord = { date: new Date().toISOString().slice(0, 10), status: isPresent ? 'Present' : 'Absent' };
-      // Initialize attendance array if it doesn't exist
-      if (!employee.attendance) {
-        employee.attendance = [];
-      }
-      employee.attendance.push(attendanceRecord);
+      
       await employee.save();
     }
-
-    res.status(200).json({ message: 'Attendance data uploaded successfully', absentEmployees });
+    
+    // Delete the uploaded file after processing
+    fs.unlinkSync(req.file.path);
+    console.log(`File deleted: ${req.file.path}`);
+    
+    console.log('Attendance marking completed successfully');
+    res.status(200).json({ 
+      message: 'Attendance data uploaded and processed successfully',
+      presentEmployees: presentEmployeeIds
+    });
   } catch (error) {
-    console.error('Error uploading attendance data:', error);
-    res.status(500).json({ message: 'Error uploading attendance data' });
+    handleError(res, error, 'Error processing attendance data');
   }
 });
+
+ 
+
+// Calculate Salary
+// Calculate Salary
+app.get('/salary/calculate', async (req, res) => {
+  try {
+    const employees = await Employee.find();
+    const salaryRecords = employees.map(employee => {
+      const presentDays = employee.attendance.filter(a => a.status === 'Present').length;
+      const totalDays = employee.attendance.length || 30; // Assuming 30 days if no attendance records
+      const baseSalary = (employee.salary / totalDays) * presentDays;
+      const da = employee.da || 0;
+      const pf = employee.pf || 0;
+      const netSalary = baseSalary + da - pf;
+      return {
+        employeeId: employee.employeeId,
+        name: employee.name,
+        presentDays,
+        totalDays,
+        baseSalary: Math.round(baseSalary),
+        da,
+        pf,
+        netSalary: Math.round(netSalary)
+      };
+    });
+    console.log(`Calculated salaries for ${salaryRecords.length} employees`);
+    res.json(salaryRecords);
+  } catch (error) {
+    handleError(res, error, 'Error calculating salaries');
+  }
+});
+
 
   
 // Start Server
