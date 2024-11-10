@@ -71,20 +71,23 @@ const AttendanceTracker = () => {
     <div className="attendance-tracker">
       <h2>Attendance Tracker</h2>
       <div className="upload-section">
-        <input
+      <input style={{width:'30%',margin:'10px'}}
           type="date"
           value={selectedDate}
           onChange={handleDateChange}
         />
-        <input
+        <br/>
+        <input style={{width:'30%',margin:'10px'}}
           type="file"
           onChange={handleFileChange}
           accept=".xlsx, .xls"
         />
+        <br/>
         <button onClick={handleUpload} disabled={isUploading}>
           {isUploading ? 'Uploading...' : 'Upload Attendance'}
         </button>
       </div>
+      <br/>
       <div className="employee-attendance">
         <h3>Employee Attendance</h3>
         <table>

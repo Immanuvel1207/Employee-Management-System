@@ -299,7 +299,7 @@ app.put('/leaves/:id', async (req, res) => {
         to: employee.email,
         subject: `Leave Request ${status}`,
         text: `Your leave request from ${updatedLeave.startDate} to ${updatedLeave.endDate} has been ${status.toLowerCase()}.
-               Reason: ${updatedLeave.reason}`
+        Reason: ${updatedLeave.reason}`
       };
       
       await transporter.sendMail(mailOptions);

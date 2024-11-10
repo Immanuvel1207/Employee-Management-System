@@ -181,12 +181,12 @@ export default function Component() {
                 <h3 className="text-xl font-semibold mb-4">Current Month Salary Details</h3>
                 <p><span className="font-semibold">Month:</span> {employee.monthlySalary.month}</p>
                 <p><span className="font-semibold">Present Days:</span> {employee.monthlySalary.presentDays}</p>
-                <p><span className="font-semibold">Total Working Days:</span> {employee.monthlySalary.workingDays}</p>
+                {/* <p><span className="font-semibold">Total Working Days:</span> {employee.monthlySalary.workingDays}</p> */}
                 <p><span className="font-semibold">Base Salary:</span> ₹{employee.salary?.toLocaleString() ?? 'N/A'}</p>
-                <p><span className="font-semibold">Holiday Pay:</span> ₹{employee.monthlySalary.holidayPay?.toLocaleString() ?? 'N/A'}</p>
+                {/* <p><span className="font-semibold">Holiday Pay:</span> ₹{employee.monthlySalary.holidayPay?.toLocaleString() ?? 'N/A'}</p> */}
                 <p><span className="font-semibold">DA:</span> ₹{employee.da?.toLocaleString() ?? 'N/A'}</p>
                 <p><span className="font-semibold">PF:</span> ₹{employee.pf?.toLocaleString() ?? 'N/A'}</p>
-                <p><span className="font-semibold">Deductions:</span> ₹{employee.monthlySalary.deductions?.toLocaleString() ?? 'N/A'}</p>
+                {/* <p><span className="font-semibold">Deductions:</span> ₹{employee.monthlySalary.deductions?.toLocaleString() ?? 'N/A'}</p> */}
                 <p><span className="font-semibold">Net Salary:</span> ₹{employee.monthlySalary.netSalary?.toLocaleString() ?? 'N/A'}</p>
               </div>
             )}

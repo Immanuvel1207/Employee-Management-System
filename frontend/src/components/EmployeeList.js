@@ -16,7 +16,7 @@ function EmployeeList({ employees, onEdit, onDelete }) {
             <p><strong>Role:</strong> {employee.role}</p>
             <p><strong>Salary:</strong> {employee.salary}</p>
             <p><strong>Joining Date:</strong> {employee.joiningDate}</p>
-            <p><strong>Ststus:</strong>{employee.resignationDate ? `Resigned${employee.resignationDate}` : 'Active'}</p>
+            <p><strong>Status:</strong>{employee.resignationDate ? `Resigned${employee.resignationDate}` : 'Active'}</p>
             <button 
               style={{ padding: '8px', marginBottom: '5px', backgroundColor: 'lightblue', borderRadius: '10px' }}
               onClick={() => onEdit(employee)}

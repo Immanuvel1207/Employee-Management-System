@@ -35,7 +35,7 @@ export default function Component() {
   const [leaves, setLeaves] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddEmployeeForm, setShowAddEmployeeForm] = useState(false);
-  const employeesPerPage = 10;
+  const employeesPerPage = 4;
   const [resignForm, setResignForm] = useState({ employeeId: '', resignationDate: '' });
   const [salaryRecords, setSalaryRecords] = useState([]);
 
@@ -215,9 +215,9 @@ export default function Component() {
 
   return (
     <div className="admin-home">
-      <h1>Employee Management System - Admin</h1>
+      <h1 style={{textAlign:'center'}}>Employee Management System - Admin</h1>
 
-      <div className="tabs">
+      <div className="tabs" >
         <button className={activeTab === 'employees' ? 'active' : ''} onClick={() => setActiveTab('employees')}>Employees</button>
         <button className={activeTab === 'attendance' ? 'active' : ''} onClick={() => setActiveTab('attendance')}>Attendance</button>
         <button className={activeTab === 'leaves' ? 'active' : ''} onClick={() => setActiveTab('leaves')}>Leaves</button>
@@ -229,14 +229,14 @@ export default function Component() {
 
       {activeTab === 'employees' && (
         <div className="tab-content">
-          <h2>Employee Management</h2>
           <div className="search-add">
-            <input
+            <input style={{width:'10%'}}
               type="text"
               placeholder="Search employees"
               value={searchTerm}
               onChange={handleSearch}
             />
+            <br/>
             <button onClick={() => setShowAddEmployeeForm(!showAddEmployeeForm)}>
               {showAddEmployeeForm ? 'Hide Form' : 'Add Employee'}
             </button>
@@ -288,12 +288,12 @@ export default function Component() {
             onResign={handleResignEmployee}
           />
 
-          <div className="pagination">
-            <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
+          <div className="pagination" style={{textAlign:'center',marginTop:'50px',padding:'10px'}}>
+            <button style={{margin:'10px'}} onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1}>
               Previous
             </button>
             <span>Page {currentPage} of {totalPages}</span>
-            <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
+            <button style={{margin:'10px'}} onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages}>
               Next
             </button>
           </div>
@@ -362,7 +362,7 @@ export default function Component() {
                 <th>Deductions (₹)</th>
                 <th>Net Salary (₹)</th>
                 <th>Uninformed Leaves</th>
-                <th>Leaves Taken After Rejection</th>
+                
               </tr>
             </thead>
             <tbody>
@@ -380,7 +380,7 @@ export default function Component() {
                   <td>₹{record.deductions.toLocaleString()}</td>
                   <td>₹{record.netSalary.toLocaleString()}</td>
                   <td>{record.uninformedLeaveDays}</td>
-                  <td>{record.leavesTakenAfterRejection}</td>
+                  
                 </tr>
               ))}
             </tbody>
@@ -392,13 +392,13 @@ export default function Component() {
         <div className="tab-content">
           <h2>Holiday Management</h2>
           <form onSubmit={handleAddHoliday} className="add-holiday-form">
-            <input
+          <input style={{width:'30%',margin:'10px'}}
               type="date"
               value={newHoliday.date}
               onChange={(e) => setNewHoliday({ ...newHoliday, date: e.target.value })}
               required
             />
-            <input
+            <input style={{width:'30%',margin:'10px'}}
               type="text"
               value={newHoliday.description}
               onChange={(e) => setNewHoliday({ ...newHoliday, description: e.target.value })}
@@ -433,7 +433,7 @@ export default function Component() {
           <form onSubmit={handleResignEmployee} className="resign-form">
             <div>
               <label htmlFor="employeeId">Employee ID:</label>
-              <input
+              <input style={{width:'30%',margin:'10px'}}
                 type="text"
                 id="employeeId"
                 value={resignForm.employeeId}
@@ -443,7 +443,7 @@ export default function Component() {
             </div>
             <div>
               <label htmlFor="resignationDate">Resignation Date:</label>
-              <input
+              <input style={{width:'30%',margin:'10px'}}
                 type="date"
                 id="resignationDate"
                 value={resignForm.resignationDate}
