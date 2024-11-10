@@ -1,0 +1,348 @@
+Employee Management System:
+
+1. Login Flow
+
+1. User arrives at login page
+2. User enters credentials
+
+1. If username is admin 
+1. System grants admin access & Redirect to Admin Dashboard
+
+
+
+2. If username is employee
+
+1. System grants employee access
+2. Redirect to Employee Dashboard
+
+
+
+3. If credentials are invalid
+
+1. Display error message
+2. Prompt to try again
+
+
+
+
+
+
+
+
+
+2. Admin Flows
+
+2.1 Employee Management Flow
+
+1. Admin navigates to Employee Management section
+2. System displays list of all employees
+3. Admin can:
+a) Add new employee
+
+1. Admin fills in employee details
+2. System generates unique employee ID & saves new employee to database
+b) Edit existing employee
+5. Admin selects employee to edit
+6. System displays employee details in editable form
+7. Admin makes changes & updates employee record in database
+c) Search/Filter employees
+10. Admin enters search term or applies filter
+11. System displays matching employees
+d) Resign employee
+12. Admin selects employee to resign
+13. Admin enters resignation date
+14. System updates employee status and resignation date
+
+
+
+
+
+2.2 Attendance Management Flow
+
+1. Admin navigates to Attendance Management section
+2. Admin selects date for attendance
+3. Admin uploads Excel file with attendance data
+4. System processes file:
+
+1. Checks for holidays
+2. Updates attendance records for each employee
+3. Marks employees as 'Present', 'Absent', 'On Leave', or 'Holiday'
+4. Identifies uninformed leaves
+
+
+
+5. System displays processed attendance summary
+6. Admin can view attendance records for all employees
+
+
+2.3 Leave Management Flow
+
+1. Admin navigates to Leave Management section
+2. System displays all pending leave requests
+3. For each leave request, admin can:
+a) Approve leave
+
+1. System updates leave status to 'Approved'  & System sends email notification to employee
+2. System updates attendance records
+b) Reject leave
+4. System updates leave status to 'Rejected' & System sends email notification to employee
+
+
+
+4. Admin can view all leave records (pending, approved, rejected)
+
+
+2.4 Salary Calculation Flow
+
+1. Admin navigates to Salary Calculation section
+2. Admin initiates salary calculation
+3. System processes for each employee:
+
+1. Retrieves attendance records
+2. Considers approved leaves and holidays
+3. Calculates base salary, DA, PF, deductions
+4. Computes final net salary
+
+
+
+4. System displays salary records for all employees
+
+
+
+2.5 Holiday Management Flow
+
+1. Admin navigates to Holiday Management section
+2. Admin can:
+a) Add new holiday
+
+1. Enter date and description & saves to holiday database
+b) View list of holidays
+3. System displays all saved holidays
+
+
+
+
+
+2.6 Messaging System Flow
+
+1. Admin navigates to Messaging section
+2. Admin composes message &  sends message
+4. System uses Twilio to send SMS to all employee phone numbers
+
+
+
+3. Employee Flows
+
+3.1 Profile View Flow
+
+1. Employee logs in
+2. System displays employee dashboard with personal details
+3. System calculates and displays current experience based on joining date
+
+
+3.2 Leave Management Flow
+
+1. Employee navigates to Leave Management section
+2. Employee can:
+a) Apply for leave
+
+1. Enter reason, start date, end date
+2. System checks for overlapping leaves
+3. System saves leave request with 'Pending' status
+
+b) View leave requests
+4. System displays all leave requests with their statuses
+
+
+
+
+
+3.3 Attendance View Flow
+
+1. Employee navigates to Attendance section & System displays employee's attendance records
+
+
+3.4 Salary Information Flow
+
+1. Employee navigates to Salary section
+2. System displays current month's salary details:
+
+1. Present days, Base salary, DA, PF & Net salary
+
+
+
+
+4. System Processes
+
+4.1 Daily Attendance Processing
+
+1. System checks current date against holiday database
+2. If holiday, marks all employees as 'Holiday'
+3. For non-holidays:
+
+1. Marks employees from attendance upload as 'Present'
+2. Checks leave database for approved leaves, marks as 'On Leave'
+3. Marks remaining employees as 'Absent'
+4. For 'Absent' employees without approved leave, creates uninformed leave record
+
+
+
+
+
+
+4.2 Monthly Salary Calculation
+
+1. At month end or when initiated by admin:
+
+1. System calculates for each employee:
+
+1. Total working days (excluding holidays) &  Present days 
+3. Calculates base salary , Adds DA, subtracts PF
+4. Applies deductions for uninformed leaves and rejected leave absences
+5. Computes final net salary
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Employee Management System
+│
+├── 1. Login
+│   ├── If Admin
+│   │   └── Redirect to Admin Dashboard
+│   │
+│   └── If Employee
+│       └── Redirect to Employee Dashboard
+│
+├── 2.1 Admin Functions
+│   ├── 2.11 Employee Management
+│   │   ├── 2.11.1Add New Employee
+│   │   │   └── Fill in employee details & System generates unique employee ID & Save new employee to database
+│   │   │
+│   │   ├── 2.11.2Edit Employee
+│   │   │   └──1. Select employee to edit, Modify employee details and update to database
+│   │   ├── 2.11.3Search/Filter Employees
+│   │   │   └── 1. Enter search term or apply filter, System displays matching employees
+│   │   │
+│   │   └── 2.11.4Resign Employee
+│   │       └──  1. Select employee to resign & Enter resignation date
+│   │           2. Update employee status and resignation date
+│   │
+│   ├── 2.12 Attendance Management
+│   │   ├── 2.12.1Upload Attendance
+│   │   │   └──  1. Select date for attendance & Upload Excel file with attendance data
+│   │   │       2. System processes file & Display processed attendance summary
+│   │   │
+│   │   └── 2.12.2View Attendance Records
+│   │       └── 1. System displays attendance records for all employees
+│   │
+│   ├── 2.13 Leave Management
+│   │   ├── 2.13.1View Leave Requests
+│   │   │   └──1. System displays all pending leave requests
+│   │   │
+│   │   ├── 2.13.2Approve Leave
+│   │   │   └──  1. Update leave status to 'Approved' & Send email notification to employee
+│   │   └── 2.13.3 Reject Leave
+│   │       └── 1. Update leave status to 'Rejected' & Send email notification to employee
+│   │
+│   ├── 2.14 Salary Calculation
+│   │   └── 1. Display salary records for all employees
+│   │
+│   ├── 2.15 Holiday Management
+│   │   ├── Add Holiday
+│   │       └── 1. Enter date and description & save to database
+│   │      		  2.System displays all saved holidays
+│   │
+│   └── 2.16 Messaging System
+│       └──  1. Compose message & send message to all employees through twilio
+│
+├── 2.2. Employee Functions
+│   ├── 2.21 Profile View
+│   │   └──  1. System displays employee dashboard with personal details
+│   │
+│   ├── 2.22 Leave Management
+│   │   ├── 2.22.1 Apply for Leave
+│   │   │   └── 1. Enter reason, start date, end date
+│   │   │       2. System checks for overlapping leaves
+│   │   │       3. Save leave request with 'Pending' status
+│   │   │
+│   │   └── 2.22.2 View Leave Requests
+│   │       └──  1. System displays all leave requests with their statuses
+│   │
+│   ├── 2.23 Attendance View
+│   │   └── Implementation:
+│   │       1. System displays employee's attendance records
+│   │
+│   └── 2.24 Salary Information
+│       └── Implementation:
+│           1. System displays current month's salary details
+└── 2.3. System Processes
+    ├── 2.31 Daily Attendance Processing
+    │   └── Implementation:
+    │       1. Check current date against holiday database
+    │       2. If holiday, mark all employees as 'Holiday'
+    │       3. For non-holidays:
+    │          - Mark employees from attendance upload as 'Present'
+    │          - Check leave database for approved leaves, mark as 'On Leave'
+    │          - Mark remaining employees as 'Absent'
+    │          - For 'Absent' employees without approved leave, create uninformed leave record
+    │
+    ├── 2.32 Leave Request Processing
+    │   └── Implementation:
+    │       1. When admin approves/rejects leave:
+    │          - Update leave status
+    │          - Send email notification to employee
+    │          - If approved, update future attendance records
+    │       2. If employee is absent on a rejected leave day:
+    │          - Mark as 'Absent (Leave Rejected)'
+    │          - Flag for salary deduction
+    │
+    ├── 2.33 Monthly Salary Calculation
+       └── Implementation:
+           1. Calculate for each employee:
+              - Total working days , Present days
+              - Calculate base salary pro-rata , Add DA, subtract PF
+              - Apply deductions for uninformed leaves and rejected leave absences
+              - Compute final net salary
+    
+    
+
+
+
+
