@@ -1,0 +1,64 @@
+.salary-calculator {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.salary-calculator h2 {
+  color: #333;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+}
+
+.salary-calculator button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 15px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.salary-calculator button:hover {
+  background-color: #218838;
+}
+
+.salary-records {
+  margin-top: 20px;
+}
+
+.salary-records h3 {
+  color: #333;
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.salary-records table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+}
+
+.salary-records th,
+.salary-records td {
+  border: 1px solid #dee2e6;
+  padding: 12px;
+  text-align: left;
+}
+
+.salary-records th {
+  background-color: #f1f3f5;
+  font-weight: bold;
+}
+
+.salary-records tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.error {
+  color: #dc3545;
+  margin-bottom: 10px;
+}

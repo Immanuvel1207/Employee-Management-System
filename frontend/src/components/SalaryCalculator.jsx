@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-
+import './SalaryCalculator.css';
 const SalaryCalculator = () => {
   const [salaryRecords, setSalaryRecords] = useState([]);
   const [error, setError] = useState('');

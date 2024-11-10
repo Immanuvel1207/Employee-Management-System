@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import './AdminHome.css';
+import './SendCommonMessage.css';
 import { useNavigate } from 'react-router-dom';
 function SendCommonMessage() {
   const [commonMessage, setCommonMessage] = useState('');

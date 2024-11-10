@@ -1,5 +1,6 @@
 // EmployeeList.js
 import React from 'react';
+import './EmployeeList.css';
 
 function EmployeeList({ employees, onEdit, onDelete }) {
   return (
