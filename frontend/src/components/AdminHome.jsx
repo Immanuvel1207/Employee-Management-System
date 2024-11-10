@@ -157,15 +157,19 @@ export default function Component() {
     setShowAddEmployeeForm(true);
   };
 
+  // const handleDeleteEmployee = async (id) => {
+  //   try {
+  //     await axios.delete(`http://localhost:5000/employees/${id}`);
+  //     setEmployees((prev) => prev.filter((employee) => employee._id !== id));
+  //     setFilteredEmployees((prev) => prev.filter((employee) => employee._id !== id));
+  //     toast.success('Employee deleted successfully');
+  //   } catch (error) {
+  //     toast.error('Failed to delete employee');
+  //   }
+  // };
+
   const handleDeleteEmployee = async (id) => {
-    try {
-      await axios.delete(`http://localhost:5000/employees/${id}`);
-      setEmployees((prev) => prev.filter((employee) => employee._id !== id));
-      setFilteredEmployees((prev) => prev.filter((employee) => employee._id !== id));
-      toast.success('Employee deleted successfully');
-    } catch (error) {
-      toast.error('Failed to delete employee');
-    }
+    alert("You cannot delete an employee!! Instead resign him..");
   };
 
   const handleSearch = (e) => {
