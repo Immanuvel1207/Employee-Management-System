@@ -188,8 +188,8 @@ export default function Component() {
   const handleLeaveApproval = async (leaveId, newStatus) => {
     try {
       await axios.put(`http://localhost:5000/leaves/${leaveId}`, { status: newStatus });
-      fetchLeaveRequests(); // Refresh all leave requests
-      toast.success(`Leave request ${newStatus.toLowerCase()}`);
+      fetchLeaveRequests();
+      toast.success(`Leave request ${newStatus.toLowerCase()} and email sent to employee`);
     } catch (error) {
       toast.error('Failed to update leave request');
     }
@@ -314,7 +314,8 @@ export default function Component() {
             <thead>
               <tr>
                 <th>Employee</th>
-                <th>Date</th>
+                <th>Start Date</th>
+                <th>End Date</th>
                 <th>Reason</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -324,7 +325,8 @@ export default function Component() {
               {leaves.map((leave) => (
                 <tr key={leave._id}>
                   <td>{leave.employeeName} ({leave.employeeId})</td>
-                  <td>{leave.date}</td>
+                  <td>{leave.startDate}</td>
+                  <td>{leave.endDate}</td>
                   <td>{leave.reason}</td>
                   <td>{leave.status}</td>
                   <td>

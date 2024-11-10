@@ -8,6 +8,7 @@ const path = require('path');
 const dayjs = require('dayjs');
 require('dotenv').config();
 const Leave = require('./models/Leave');
+const nodemailer = require('nodemailer');
 
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -26,6 +27,17 @@ const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)){
     fs.mkdirSync(uploadsDir);
 }
+
+
+// Configure nodemailer
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
+
 // Multer storage configuration
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -236,7 +248,6 @@ app.get('/employees/:id', async (req, res) => {
 });
 
 // Add Leave Request
-// Add Leave Request
 app.post('/leaves', async (req, res) => {
   try {
     const newLeave = new Leave(req.body);
@@ -268,6 +279,7 @@ app.get('/leaves/employee/:employeeId', async (req, res) => {
 });
 
 // Update Leave Status
+// Update Leave Status route
 app.put('/leaves/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -277,6 +289,20 @@ app.put('/leaves/:id', async (req, res) => {
     
     if (!updatedLeave) {
       return res.status(404).json({ message: 'Leave request not found' });
+    }
+    
+    // Send email notification
+    const employee = await Employee.findOne({ employeeId: updatedLeave.employeeId });
+    if (employee) {
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: employee.email,
+        subject: `Leave Request ${status}`,
+        text: `Your leave request from ${updatedLeave.startDate} to ${updatedLeave.endDate} has been ${status.toLowerCase()}.
+               Reason: ${updatedLeave.reason}`
+      };
+      
+      await transporter.sendMail(mailOptions);
     }
     
     res.json({ message: `Leave ${status.toLowerCase()}`, leave: updatedLeave });
@@ -375,7 +401,11 @@ app.post('/attendance/upload', upload.single('excel-file'), async (req, res) => 
       let status = isPresent ? 'Present' : 'Absent';
       
       // Check for leave requests
-      const leaveRequest = await Leave.findOne({ employeeId: employee.employeeId, date });
+      const leaveRequest = await Leave.findOne({ 
+        employeeId: employee.employeeId,
+        startDate: { $lte: date },
+        endDate: { $gte: date }
+      });
       
       if (leaveRequest) {
         if (leaveRequest.status === 'Approved') {
@@ -389,7 +419,8 @@ app.post('/attendance/upload', upload.single('excel-file'), async (req, res) => 
         const uninformedLeave = new Leave({
           employeeId: employee.employeeId,
           employeeName: employee.name,
-          date,
+          startDate: date,
+          endDate: date,
           reason: 'Uninformed Leave',
           status: 'Rejected',
           isUninformed: true
@@ -432,6 +463,7 @@ app.post('/attendance/upload', upload.single('excel-file'), async (req, res) => 
  
 
 // Update salary calculation route
+// Update salary calculation to consider leave dates
 app.get('/salary/calculate', async (req, res) => {
   const currentMonth = dayjs().format('YYYY-MM');
   const daysInMonth = dayjs().daysInMonth();
@@ -445,7 +477,25 @@ app.get('/salary/calculate', async (req, res) => {
       const monthAttendance = employee.attendance.filter(a => a.date.startsWith(currentMonth));
       const presentDays = monthAttendance.filter(a => a.status === 'Present').length;
       const holidaysInAttendance = monthAttendance.filter(a => holidayDates.includes(a.date)).length;
-      const leaveDays = monthAttendance.filter(a => a.status === 'On Leave').length;
+      
+      // Calculate leave days considering start and end dates
+      const leaves = await Leave.find({
+        employeeId: employee.employeeId,
+        status: 'Approved',
+        $or: [
+          { startDate: { $regex: `^${currentMonth}` } },
+          { endDate: { $regex: `^${currentMonth}` } }
+        ]
+      });
+      
+      let leaveDays = 0;
+      leaves.forEach(leave => {
+        const start = dayjs(leave.startDate).startOf('day');
+        const end = dayjs(leave.endDate).startOf('day');
+        const daysOfLeave = end.diff(start, 'day') + 1;
+        leaveDays += daysOfLeave;
+      });
+      
       const uninformedLeaveDays = monthAttendance.filter(a => a.status === 'Absent').length;
       const leavesTakenAfterRejection = monthAttendance.filter(a => a.status === 'Absent (Leave Rejected)').length;
       const totalWorkingDays = daysInMonth - holidayDates.length;
@@ -481,7 +531,8 @@ app.get('/salary/calculate', async (req, res) => {
         deductions: Math.round(deductions),
         netSalary: Math.round(netSalary),
         uninformedLeaveDays,
-        leavesTakenAfterRejection
+        leavesTakenAfterRejection,
+        approvedLeaveDays: leaveDays
       };
     }));
 

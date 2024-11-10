@@ -10,7 +10,8 @@ export default function Component() {
   const [employee, setEmployee] = useState(null);
   const [leaveForm, setLeaveForm] = useState({ 
     reason: '', 
-    date: dayjs().format('YYYY-MM-DD') 
+    startDate: dayjs().format('YYYY-MM-DD'),
+    endDate: dayjs().format('YYYY-MM-DD')
   });
   const [leaves, setLeaves] = useState([]);
   const [experience, setExperience] = useState('');
@@ -60,7 +61,7 @@ export default function Component() {
       });
       const response = await axios.get(`http://localhost:5000/leaves/employee/${id}`);
       setLeaves(response.data);
-      setLeaveForm({ reason: '', date: dayjs().format('YYYY-MM-DD') });
+      setLeaveForm({ reason: '', startDate: dayjs().format('YYYY-MM-DD'), endDate: dayjs().format('YYYY-MM-DD') });
     } catch (error) {
       setError('Failed to submit leave request.');
       console.error('Error submitting leave request:', error);
@@ -117,29 +118,37 @@ export default function Component() {
           <>
             {/* Leave Application Section */}
             <div className="mb-8">
-              <h3 className="text-xl font-semibold mb-4">Apply for Leave</h3>
-              <div className="space-y-4">
+            <h3 className="text-xl font-semibold mb-4">Apply for Leave</h3>
+            <div className="space-y-4">
+              <input
+                type="text"
+                placeholder="Reason for leave"
+                value={leaveForm.reason}
+                onChange={(e) => setLeaveForm(prev => ({ ...prev, reason: e.target.value }))}
+                className="w-full p-2 border rounded"
+              />
+              <div className="flex space-x-4">
                 <input
-                  type="text"
-                  placeholder="Reason for leave"
-                  value={leaveForm.reason}
-                  onChange={(e) => setLeaveForm(prev => ({ ...prev, reason: e.target.value }))}
-                  className="w-full p-2 border rounded"
+                  type="date"
+                  value={leaveForm.startDate}
+                  onChange={(e) => setLeaveForm(prev => ({ ...prev, startDate: e.target.value }))}
+                  className="w-1/2 p-2 border rounded"
                 />
                 <input
                   type="date"
-                  value={leaveForm.date}
-                  onChange={(e) => setLeaveForm(prev => ({ ...prev, date: e.target.value }))}
-                  className="w-full p-2 border rounded"
+                  value={leaveForm.endDate}
+                  onChange={(e) => setLeaveForm(prev => ({ ...prev, endDate: e.target.value }))}
+                  className="w-1/2 p-2 border rounded"
                 />
-                <button
-                  onClick={handleLeaveApplication}
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                >
-                  Submit Leave Request
-                </button>
               </div>
+              <button
+                onClick={handleLeaveApplication}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              >
+                Submit Leave Request
+              </button>
             </div>
+          </div>
 
             {/* Attendance Section */}
             <div className="attendance-section mb-8">
