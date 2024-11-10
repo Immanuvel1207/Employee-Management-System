@@ -17,7 +17,7 @@ const AttendanceTracker = () => {
 
   const fetchEmployees = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/employees');
+      const response = await axios.get('https://employee-management-system-backend-lie4.onrender.com/employees');
       setEmployees(response.data);
     } catch (error) {
       console.error('Failed to fetch employees:', error);
@@ -48,7 +48,7 @@ const AttendanceTracker = () => {
     setIsUploading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/attendance/upload', formData, {
+      const response = await axios.post('https://employee-management-system-backend-lie4.onrender.com/attendance/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
