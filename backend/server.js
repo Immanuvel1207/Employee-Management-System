@@ -8,6 +8,7 @@ const path = require('path');
 const dayjs = require('dayjs');
 require('dotenv').config();
 const Leave = require('./models/Leave');
+const Employee = require('./models/Employee');
 const nodemailer = require('nodemailer');
 
 
@@ -52,6 +53,8 @@ const upload = multer({ storage: storage });
 
 const app = express();
 
+
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
@@ -75,34 +78,34 @@ const Holiday = mongoose.model('Holiday', holidaySchema);
 
 
 // Employee Schema
-const employeeSchema = new mongoose.Schema({
-  employeeId: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-  email: { type: String, required: true },
-  department: { type: String, required: true },
-  salary: { type: Number, required: true },
-  phoneNumber: { type: String, required: true },
-  sex: { type: String, required: true },
-  qualifications: { type: String, required: true },
-  role: { type: String, required: true },
-  dob: { type: String, required: true },
-  joiningDate: { type: String, required: true },
-  resignationDate: { type: String },
-  experience: { type: String, required: true },
-  experiencedRole: { type: String },
-  attendance: [{ date: String, status: String }],
-  pf: { type: Number, required: true },
-  da: { type: Number, required: true },
-  monthlySalary: {
-    month: String,
-    presentDays: Number,
-    totalDays: Number,
-    netSalary: Number
-  }
-});
+// const employeeSchema = new mongoose.Schema({
+//   employeeId: { type: String, required: true, unique: true },
+//   name: { type: String, required: true },
+//   email: { type: String, required: true },
+//   department: { type: String, required: true },
+//   salary: { type: Number, required: true },
+//   phoneNumber: { type: String, required: true },
+//   sex: { type: String, required: true },
+//   qualifications: { type: String, required: true },
+//   role: { type: String, required: true },
+//   dob: { type: String, required: true },
+//   joiningDate: { type: String, required: true },
+//   resignationDate: { type: String },
+//   experience: { type: String, required: true },
+//   experiencedRole: { type: String },
+//   attendance: [{ date: String, status: String }],
+//   pf: { type: Number, required: true },
+//   da: { type: Number, required: true },
+//   monthlySalary: {
+//     month: String,
+//     presentDays: Number,
+//     totalDays: Number,
+//     netSalary: Number
+//   }
+// });
 
 // Employee Model
-const Employee = mongoose.model('Employee', employeeSchema);
+// const Employee = mongoose.model('Employee', employeeSchema);
 
 
 // Accepted Leave Schema
@@ -168,6 +171,9 @@ app.post('/employees', async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 });
+
+const projectRoutes = require('./routes/projects');
+app.use('/projects', projectRoutes);
 
 // Get All Employees
 app.get('/employees', async (req, res) => {

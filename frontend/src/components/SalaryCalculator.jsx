@@ -7,7 +7,7 @@ const SalaryCalculator = () => {
 
   const calculateSalary = async () => {
     try {
-      const response = await axios.get('https://employee-management-system-backend-lie4.onrender.com/salary/calculate');
+      const response = await axios.get('http://localhost:5000/salary/calculate');
       setSalaryRecords(response.data);
       setError('');
       alert('Salaries calculated successfully');

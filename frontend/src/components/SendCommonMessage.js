@@ -15,7 +15,7 @@ function SendCommonMessage() {
 
   const handleSendCommonMessage = async () => {
     try {
-      await axios.post('https://employee-management-system-backend-lie4.onrender.com/employees/message', { message: commonMessage });
+      await axios.post('http://localhost:5000/employees/message', { message: commonMessage });
       toast.success('Message sent to all employees');
       setCommonMessage('');
     } catch (error) {

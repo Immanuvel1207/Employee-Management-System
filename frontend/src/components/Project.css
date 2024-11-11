@@ -1,0 +1,55 @@
+/* components/Project.css */
+.project-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .project-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .project-form input,
+  .project-form textarea {
+    padding: 8px;
+    font-size: 16px;
+  }
+  
+  .project-form button {
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .project-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  
+  .project-card {
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 5px;
+  }
+  
+  .project-employees ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .add-employee {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+  }
+  
+  .add-employee select,
+  .add-employee button {
+    padding: 5px;
+  }
