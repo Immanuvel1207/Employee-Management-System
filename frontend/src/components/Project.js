@@ -14,7 +14,7 @@ const Project = () => {
   });
   const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState('');
-  const API_URL = 'http://localhost:5000';
+  const API_URL = 'https://employee-management-system-backend-lie4.onrender.com';
 
   useEffect(() => {
     fetchProjects();
@@ -32,7 +32,7 @@ const Project = () => {
 
   const fetchEmployees = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/employees');
+      const response = await axios.get('https://employee-management-system-backend-lie4.onrender.com/employees');
       setEmployees(response.data);
     } catch (error) {
       console.error('Error fetching employees:', error);
