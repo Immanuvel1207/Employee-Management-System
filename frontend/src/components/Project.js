@@ -14,7 +14,7 @@ const Project = () => {
   });
   const [employees, setEmployees] = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState('');
-  const API_URL = 'https://employee-management-system-topaz-psi.vercel.app/';
+  const API_URL = 'https://employee-management-system-five-gamma.vercel.app/';
 
   useEffect(() => {
     fetchProjects();
@@ -32,7 +32,7 @@ const Project = () => {
 
   const fetchEmployees = async () => {
     try {
-      const response = await axios.get('https://employee-management-system-topaz-psi.vercel.app//employees');
+      const response = await axios.get('https://employee-management-system-five-gamma.vercel.app//employees');
       setEmployees(response.data);
     } catch (error) {
       console.error('Error fetching employees:', error);

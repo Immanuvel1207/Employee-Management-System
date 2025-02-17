@@ -15,7 +15,7 @@ function SendCommonMessage() {
 
   const handleSendCommonMessage = async () => {
     try {
-      await axios.post('https://employee-management-system-topaz-psi.vercel.app//employees/message', { message: commonMessage });
+      await axios.post('https://employee-management-system-five-gamma.vercel.app//employees/message', { message: commonMessage });
       toast.success('Message sent to all employees');
       setCommonMessage('');
     } catch (error) {

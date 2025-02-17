@@ -17,7 +17,7 @@ const AttendanceTracker = () => {
 
   const fetchEmployees = async () => {
     try {
-      const response = await axios.get('https://employee-management-system-topaz-psi.vercel.app//employees');
+      const response = await axios.get('https://employee-management-system-five-gamma.vercel.app//employees');
       setEmployees(response.data);
     } catch (error) {
       console.error('Failed to fetch employees:', error);
@@ -48,7 +48,7 @@ const AttendanceTracker = () => {
     setIsUploading(true);
 
     try {
-      const response = await axios.post('https://employee-management-system-topaz-psi.vercel.app//attendance/upload', formData, {
+      const response = await axios.post('https://employee-management-system-five-gamma.vercel.app//attendance/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
