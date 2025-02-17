@@ -7,7 +7,7 @@ const SalaryCalculator = () => {
 
   const calculateSalary = async () => {
     try {
-      const response = await axios.get('https://employee-management-system-aiyda5537.vercel.app//salary/calculate');
+      const response = await axios.get('https://employee-management-system-backend-lie4.onrender.com/salary/calculate');
       setSalaryRecords(response.data);
       setError('');
       alert('Salaries calculated successfully');

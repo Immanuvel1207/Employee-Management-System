@@ -49,7 +49,7 @@ export default function Component() {
 
   const fetchEmployees = async () => {
     try {
-      const response = await axios.get('https://employee-management-system-aiyda5537.vercel.app//employees');
+      const response = await axios.get('https://employee-management-system-backend-lie4.onrender.com/employees');
       setEmployees(response.data);
       setFilteredEmployees(response.data);
     } catch (error) {
@@ -59,7 +59,7 @@ export default function Component() {
 
   const fetchSalaryRecords = async () => {
     try {
-      const response = await axios.get('https://employee-management-system-aiyda5537.vercel.app//salary/calculate');
+      const response = await axios.get('https://employee-management-system-backend-lie4.onrender.com/salary/calculate');
       setSalaryRecords(response.data);
     } catch (error) {
       toast.error('Failed to fetch salary records');
@@ -68,7 +68,7 @@ export default function Component() {
 
   const fetchHolidays = async () => {
     try {
-      const response = await axios.get('https://employee-management-system-aiyda5537.vercel.app//holidays');
+      const response = await axios.get('https://employee-management-system-backend-lie4.onrender.com/holidays');
       setHolidays(response.data);
     } catch (error) {
       toast.error('Failed to fetch holidays');
@@ -77,7 +77,7 @@ export default function Component() {
 
   const fetchLeaveRequests = async () => {
     try {
-      const response = await axios.get('https://employee-management-system-aiyda5537.vercel.app//leaves');
+      const response = await axios.get('https://employee-management-system-backend-lie4.onrender.com/leaves');
       setLeaves(response.data);
     } catch (error) {
       toast.error('Failed to fetch leave requests');
@@ -87,7 +87,7 @@ export default function Component() {
   const handleResignEmployee = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`https://employee-management-system-aiyda5537.vercel.app//employees/resign/${resignForm.employeeId}`, {
+      await axios.put(`https://employee-management-system-backend-lie4.onrender.com/employees/resign/${resignForm.employeeId}`, {
         resignationDate: resignForm.resignationDate
       });
       toast.success('Employee resigned successfully');
@@ -105,7 +105,7 @@ export default function Component() {
 
   const handleAddEmployee = async () => {
     try {
-      const response = await axios.post('https://employee-management-system-aiyda5537.vercel.app//employees', newEmployee);
+      const response = await axios.post('https://employee-management-system-backend-lie4.onrender.com/employees', newEmployee);
       setEmployees((prev) => [...prev, response.data]);
       setFilteredEmployees((prev) => [...prev, response.data]);
       toast.success('Employee added successfully');
@@ -118,7 +118,7 @@ export default function Component() {
   const handleUpdateEmployee = async () => {
     if (!selectedEmployee) return;
     try {
-      const response = await axios.put(`https://employee-management-system-aiyda5537.vercel.app//employees/${selectedEmployee._id}`, newEmployee);
+      const response = await axios.put(`https://employee-management-system-backend-lie4.onrender.com/employees/${selectedEmployee._id}`, newEmployee);
       setEmployees((prev) =>
         prev.map((employee) =>
           employee._id === selectedEmployee._id ? response.data : employee
@@ -160,7 +160,7 @@ export default function Component() {
 
   // const handleDeleteEmployee = async (id) => {
   //   try {
-  //     await axios.delete(`https://employee-management-system-aiyda5537.vercel.app//employees/${id}`);
+  //     await axios.delete(`https://employee-management-system-backend-lie4.onrender.com/employees/${id}`);
   //     setEmployees((prev) => prev.filter((employee) => employee._id !== id));
   //     setFilteredEmployees((prev) => prev.filter((employee) => employee._id !== id));
   //     toast.success('Employee deleted successfully');
@@ -188,7 +188,7 @@ export default function Component() {
 
   const handleLeaveApproval = async (leaveId, newStatus) => {
     try {
-      await axios.put(`https://employee-management-system-aiyda5537.vercel.app//leaves/${leaveId}`, { status: newStatus });
+      await axios.put(`https://employee-management-system-backend-lie4.onrender.com/leaves/${leaveId}`, { status: newStatus });
       fetchLeaveRequests();
       toast.success(`Leave request ${newStatus.toLowerCase()} and email sent to employee`);
     } catch (error) {
@@ -199,7 +199,7 @@ export default function Component() {
   const handleAddHoliday = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('https://employee-management-system-aiyda5537.vercel.app//holidays', newHoliday);
+      await axios.post('https://employee-management-system-backend-lie4.onrender.com/holidays', newHoliday);
       toast.success('Holiday added successfully');
       fetchHolidays();
       setNewHoliday({ date: '', description: '' });

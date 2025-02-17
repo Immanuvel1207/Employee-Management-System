@@ -613,4 +613,6 @@ app.get('/employees/:id/attendance', async (req, res) => {
   
 // Start Server
 const PORT = 5000;
-module.exports = app;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
