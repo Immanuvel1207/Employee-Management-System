@@ -22,13 +22,13 @@ export default function Component() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const employeeResponse = await axios.get(`https://employee-management-system-five-gamma.vercel.app//employees/search/${id}`);
+        const employeeResponse = await axios.get(`https://employee-management-system-aiyda5537.vercel.app//employees/search/${id}`);
         setEmployee(employeeResponse.data);
         if (employeeResponse.data && employeeResponse.data.joiningDate) {
           calculateExperience(employeeResponse.data.joiningDate);
         }
         if (!employeeResponse.data.resignationDate) {
-          const leavesResponse = await axios.get(`https://employee-management-system-five-gamma.vercel.app//leaves/employee/${id}`);
+          const leavesResponse = await axios.get(`https://employee-management-system-aiyda5537.vercel.app//leaves/employee/${id}`);
           setLeaves(leavesResponse.data);
         }
       } catch (error) {
@@ -54,12 +54,12 @@ export default function Component() {
       if (!employee || employee.resignationDate) {
         throw new Error('Cannot apply for leave');
       }
-      await axios.post('https://employee-management-system-five-gamma.vercel.app//leaves', {
+      await axios.post('https://employee-management-system-aiyda5537.vercel.app//leaves', {
         employeeId: id,
         employeeName: employee.name,
         ...leaveForm
       });
-      const response = await axios.get(`https://employee-management-system-five-gamma.vercel.app//leaves/employee/${id}`);
+      const response = await axios.get(`https://employee-management-system-aiyda5537.vercel.app//leaves/employee/${id}`);
       setLeaves(response.data);
       setLeaveForm({ reason: '', startDate: dayjs().format('YYYY-MM-DD'), endDate: dayjs().format('YYYY-MM-DD') });
     } catch (error) {
